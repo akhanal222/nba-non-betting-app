@@ -1,0 +1,96 @@
+<h1 align="center">NBA (Non-Betting App)</h1>
+
+---
+
+## Week 1: Architecture & Foundation
+
+### Project Goal
+Establish backend, database, and overall project structure.
+
+---
+
+<h1 align="center">Week 1 Progress</h1>
+
+### Backend Setup
+
+| Task | Status |
+|------|--------|
+| Spring Boot project initialized | Completed |
+| Maven configured | Completed |
+| Neon PostgreSQL database created | Completed |
+| Backend connected to Neon | Completed |
+| JPA entities implemented | Completed |
+| Repository layer created | Completed |
+| Balldontlie API configured | Completed |
+| Basic controller structure created | Completed |
+| Lombok integrated | Completed |
+| Frontend setup(React + Vite) | Completed|
+
+---
+
+### Database Schema
+
+The following core tables were created:
+
+| Table Name |
+|------------|
+| players |
+| teams |
+| games |
+| player_game_statistics |
+| user / authentication related tables |
+
+Database Schema link (Diagram) :
+   ```python
+    https://drive.google.com/file/d/1coaCfPUfVlGbc75deqzRQlqomIR0r3jX/view?usp=sharing
+   ```
+
+---
+
+<h1 align="center">Setup Instructions</h1>
+
+### Environment Variables
+Create environment variables through the Run button, Edit config:
+
+**Backend**
+- `DB_Password` = Put Neon database password
+- `BDL_API_KEY` = Put Balldontlie API key
+
+---
+### Run Backend and Frontend:
+#### 1. Backend :
+   ```python
+    http://localhost:8080/
+   ```
+#### 2. Frontend :
+ ```python
+  cd frontend/
+   ```
+ ```python
+  npm run dev
+   ```
+   ```python
+    http://localhost:5173/
+   ```
+---
+
+## Architecture Overview
+
+#### Application flow:
+
+##### Frontend (React + Vite)  
+→ REST Controllers (Spring Boot)  
+→ Service Layer  
+→ JPA Repositories  
+→ Neon PostgreSQL Database
+
+#### External Data Flow:
+
+##### Balldontlie API  
+→ Backend  
+→ Database
+
+---
+
+
+
