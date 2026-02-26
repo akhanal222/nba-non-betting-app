@@ -9,7 +9,7 @@ export default function App() {
 
   // Test backend connection on page load
   useEffect(() => {
-    fetch("http://localhost:8080/test")
+    fetch("http://localhost:8080/test") // Checking backend is running or not
       .then((r) => r.text())
       .then(setMsg)
       .catch(() => setMsg("Backend not reachable"));
@@ -18,7 +18,8 @@ export default function App() {
   const loadTeams = () => {
     setLoading(true);
 
-    fetch("http://localhost:8080/bdl/teams")
+    // test that the external api is connceted to show up in the front page
+    fetch("http://localhost:8080/bdl/teams") // Get all the teams in the nba this is for testing
       .then((res) => res.json())
       .then((data) => {
         setTeams(data.data || data);
