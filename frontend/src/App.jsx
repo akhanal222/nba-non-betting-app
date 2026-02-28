@@ -6,6 +6,9 @@ export default function App() {
   const [msg, setMsg] = useState("Loading...");
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
+  const [players, setPlayers] = useState([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   // Test backend connection on page load
   useEffect(() => {
@@ -30,6 +33,23 @@ export default function App() {
         setLoading(false);
       });
   };
+    const searchPlayers = () => {
+        const query = q.trim();
+        if (query.length < 2) return;
+
+        setLoadingPlayers(true);
+
+        fetch(`http://localhost:8080/api/players/search?q=${encodeURIComponent(query)}`) // Search player endpoint
+            .then((res) => res.json())
+            .then((data) => {
+                setPlayers(Array.isArray(data) ? data : []);
+                setLoadingPlayers(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                setLoadingPlayers(false);
+            });
+    };
 
   return (
     <div style={{ padding: 20 }}>
@@ -47,14 +67,40 @@ export default function App() {
 
       <h2>NBA Teams</h2>
 
-      <button onClick={loadTeams}>Load Teams</button>
+        <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search player (ex: lebron james)"
+        />
 
+        <button onClick={searchPlayers} disabled={loadingPlayers}>
+            {loadingPlayers ? "Searching..." : "Search Player"}
+        </button>
+
+        {players.map((player) => (
+            <div key={player.playerId}>
+                <p>Name: {player.firstName} {player.lastName}</p>
+                <p>Jersey Number: {player.jerseyNumber ?? "—"}</p>
+                <p>Height: {player.height ?? "—"}</p>
+                <p>Weight: {player.weight ?? "—"}</p>
+                <p>Position: {player.position || "—"}</p>
+
+                <p>Team Name: {player.team?.teamName ?? "—"}</p>
+                <p>{player.team?.abbreviation ?? ""}</p>
+                <p>{player.team?.city ?? ""}</p>
+                <p>{player.team?.conference ?? ""}</p>
+                <p>{player.team?.division ?? ""}</p>
+            </div>
+        ))}
+
+      <button onClick={loadTeams}>Load Teams</button>'
       {loading && <p>Loading...</p>}
 
       {teams.map((team) => (
         <div key={team.id}>
           <p>{team.full_name}</p>
         </div>
+
       ))}
     </div>
   );

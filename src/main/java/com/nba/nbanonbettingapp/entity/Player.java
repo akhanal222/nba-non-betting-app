@@ -20,7 +20,7 @@ public class Player {
     @Column(name = "player_id")
     private Long playerId;
 
-    @Column(name = "external_api_id")
+    @Column(name = "external_api_id", unique = true)
     private Long externalApiId;
 
     @Column(name = "first_name")
@@ -43,6 +43,9 @@ public class Player {
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Column(name = "jersey_number")
+    private String jerseyNumber;
 
     // Many players -> one team
     @ManyToOne

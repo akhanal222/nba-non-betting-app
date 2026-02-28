@@ -1,0 +1,135 @@
+package com.nba.nbanonbettingapp.service;
+
+import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
+import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
+import com.nba.nbanonbettingapp.entity.Player;
+import com.nba.nbanonbettingapp.entity.Team;
+import com.nba.nbanonbettingapp.repository.PlayerRepository;
+import com.nba.nbanonbettingapp.repository.TeamRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class PlayerSearchService {
+
+    // Repositories for reading/writing Players and Teams in the database
+    private final PlayerRepository playerRepository;
+    private final TeamRepository teamRepository;
+
+    // Service that calls the external Balldontlie API
+    private final BalldontlieService balldontlieService;
+
+    // Dependency injection through constructor
+    public PlayerSearchService(PlayerRepository playerRepository,
+                               TeamRepository teamRepository,
+                               BalldontlieService balldontlieService) {
+        this.playerRepository = playerRepository;
+        this.teamRepository = teamRepository;
+        this.balldontlieService = balldontlieService;
+    }
+
+    /**
+     * Search for players by name.
+     * 1) Try database first
+     * 2) If DB is empty, call Balldontlie API
+     * 3) Save missing players/teams into DB for future searches
+     */
+    public List<Player> search(String q) {
+
+        // Normalize input: handle null, remove extra spaces
+        String query = q == null ? "" : q.trim();
+        if (query.length() < 2) return List.of();
+
+        // Split query by spaces (like this "LeBron James" -> ["LeBron", "James"])
+        String[] parts = query.split(" ");
+
+        List<Player> dbResults;
+
+        // If user typed first + last name, search both fields
+        if (parts.length == 2) {
+            dbResults = playerRepository
+                    .findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(
+                            parts[0], parts[1]
+                    );
+        } else {
+            // Otherwise search either first or last name, limit results to 20
+            dbResults = playerRepository
+                    .findTop20ByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByLastNameAsc(
+                            query, query
+                    );
+        }
+        // If the database already has matches, return them immediately
+        if (!dbResults.isEmpty()) return dbResults;
+
+        //Call API if DB empty
+        BdlResponseDTO<BdlPlayerDTO> response =
+                balldontlieService.searchPlayers(query);
+
+        List<BdlPlayerDTO> apiPlayers = response.data();
+
+        if (apiPlayers == null || apiPlayers.isEmpty()) { // If API returns nothing, return empty list
+            return List.of();
+        }
+
+        // Save players safely (and teams too) so future searches hit DB
+        List<Player> result = new ArrayList<>();
+
+        for (BdlPlayerDTO dto : apiPlayers) {
+
+            // External API player id is required for saving/uniqueness
+            Long apiId = (dto.id() == null) ? null : dto.id().longValue();
+            if (apiId == null) continue;
+
+            // Avoid duplicates: if player already exists by externalApiId, reuse it.
+            // Otherwise create a new Player record and save it.
+            Player player = playerRepository
+                    .findByExternalApiId(apiId)
+                    .orElseGet(() -> {
+
+                        Player p = new Player();
+                        p.setExternalApiId(apiId);
+                        p.setFirstName(dto.firstName());
+                        p.setLastName(dto.lastName());
+                        p.setPosition(dto.position());
+                        p.setHeight(dto.height());
+                        p.setWeight(dto.weight());
+                        p.setJerseyNumber(dto.jerseyNumber());
+                        p.setIsActive(true);
+                        p.setCreatedAt(OffsetDateTime.now());
+
+                        // If API includes a team, ensure the team exists in DB too
+                        // Then connect player.team_id to that team record.
+                        if (dto.team() != null && dto.team().id() != null) {
+
+                            Long teamApiId = dto.team().id().longValue();
+
+                            Team team = teamRepository
+                                    .findByExternalApiId(teamApiId)
+                                    .orElseGet(() -> {
+                                        Team t = new Team();
+                                        t.setExternalApiId(teamApiId);
+                                        t.setTeamName(dto.team().fullName());
+                                        t.setCity(dto.team().city());
+                                        t.setAbbreviation(dto.team().abbreviation());
+                                        t.setConference(dto.team().conference());
+                                        t.setDivision(dto.team().division());
+
+                                        t.setCreatedAt(OffsetDateTime.now());
+                                        return teamRepository.save(t);
+                                    });
+                            // Link player to team (sets team_id FK)
+                            p.setTeam(team); //sets team_id
+                        }
+                        // Save new team and return it
+                        return playerRepository.save(p);
+                    });
+            // Add existing or newly-created player to final response list
+            result.add(player);
+        }
+
+        return result;
+    }
+}

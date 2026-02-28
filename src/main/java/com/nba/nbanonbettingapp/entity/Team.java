@@ -1,5 +1,6 @@
 package com.nba.nbanonbettingapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,6 +44,7 @@ public class Team {
     private OffsetDateTime createdAt;
 
     // One team -> many players
+    @JsonIgnore
     @OneToMany(mappedBy = "team")
     private List<Player> players = new ArrayList<>();
 
