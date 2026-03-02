@@ -44,16 +44,24 @@ public class PlayerSearchService {
         if (query.length() < 2) return List.of();
 
         // Split query by spaces (like this "LeBron James" -> ["LeBron", "James"])
-        String[] parts = query.split(" ");
+        String[] parts = query.trim().split("\\s+");
 
         List<Player> dbResults;
 
         // If user typed first + last name, search both fields
-        if (parts.length == 2) {
+        if (parts.length >= 2) {
+            String first = parts[0];
+            String last = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+            // Try normal "first last"
             dbResults = playerRepository
                     .findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(
-                            parts[0], parts[1]
+                            first, last
                     );
+            // This is for try "last first" if user typed reversed order
+            if (dbResults.isEmpty()) {
+                dbResults = playerRepository
+                        .findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(last, first);
+            }
         } else {
             // Otherwise search either first or last name, limit results to 20
             dbResults = playerRepository
@@ -65,9 +73,14 @@ public class PlayerSearchService {
         if (!dbResults.isEmpty()) return dbResults;
 
         //Call API if DB empty
-        BdlResponseDTO<BdlPlayerDTO> response =
-                balldontlieService.searchPlayers(query);
-
+        BdlResponseDTO<BdlPlayerDTO> response;
+        if (parts.length >= 2) {
+            String first = parts[0];
+            String last = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+            response = balldontlieService.searchPlayersByName(first, last);
+        } else {
+            response = balldontlieService.searchPlayers(query);
+        }
         List<BdlPlayerDTO> apiPlayers = response.data();
 
         if (apiPlayers == null || apiPlayers.isEmpty()) { // If API returns nothing, return empty list
