@@ -1,10 +1,30 @@
 <h1 align="center">NBA (Non-Betting App)</h1>
 
----
+## Week 2: Data Ingestion from External api
 
+### Goal:  
+System can fetch and store real NBA data
+
+---
+<h1 align="center">Week 2 Progress</h1>
+
+### Get Data in Database
+| Task                                                                | Status    |
+|---------------------------------------------------------------------| --------- |
+| Player search (DB-first strategy) implemented                       | Completed |
+| Player upsert logic (prevent duplicates)                            | Completed |
+| Team upsert logic                                                   | Completed |
+| PlayerStatsService implemented                                      | Completed |
+| Game upsert with home and away teams                                | Completed |
+| PlayerGameStatistic upsert logic                                    | Completed |
+| Limit validation (5 / 10 / 15 games)                                | Completed |
+| Safe date parsing implemented                                       | Completed |
+| nba_player_lookup table integrated<br/>(For getting photo of the player) | Completed |
+| NBA headshot rendering in frontend                                  | Completed |
+---
 ## Week 1: Architecture & Foundation
 
-### Project Goal
+### Goal: 
 Establish backend, database, and overall project structure.
 
 ---
