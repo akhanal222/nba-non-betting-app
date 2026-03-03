@@ -1,5 +1,6 @@
 package com.nba.nbanonbettingapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -47,12 +48,16 @@ public class Player {
     @Column(name = "jersey_number")
     private String jerseyNumber;
 
+    @Column(name = "nba_player_id")
+    private Long nbaPlayerId;
+
     // Many players -> one team
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
 
     // One player -> many stats
+    @JsonBackReference
     @OneToMany(mappedBy = "player")
     private List<PlayerGameStatistic> gameStats = new ArrayList<>();
 

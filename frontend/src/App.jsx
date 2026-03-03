@@ -79,6 +79,13 @@ export default function App() {
 
         {players.map((player) => (
             <div key={player.playerId}>
+                {player.nbaPlayerId && (
+                    <img
+                        src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`}
+                        alt={`${player.firstName} ${player.lastName}`}
+                        style={{ width: "120px", height: "auto" }}
+                    />
+                )}
                 <p>Name: {player.firstName} {player.lastName}</p>
                 <p>Jersey Number: {player.jerseyNumber ?? "—"}</p>
                 <p>Height: {player.height ?? "—"}</p>

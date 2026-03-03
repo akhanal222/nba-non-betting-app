@@ -1,7 +1,10 @@
 package com.nba.nbanonbettingapp.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.nba.nbanonbettingapp.dto.BdlGameDTO;
 import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
+import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -61,7 +64,6 @@ public class BalldontlieService {
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
-
     /**
      * Fetches a limited list of teams from the Balldontlie API.
      * Used to retrieve team information.
@@ -74,5 +76,34 @@ public class BalldontlieService {
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
+    }
+    /**
+     * Fetch stats for a player from Balldontlie API.
+     * We will request more than we need, then take last N.
+     */
+    public BdlResponseDTO<BdlStatDTO> getStatsByPlayerId(Long playerApiId, int perPage) {
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/stats")
+                        .queryParam("player_ids[]", playerApiId)
+                        .queryParam("per_page", perPage) // set 50 or 100
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+    /**
+     * Fetch stats for a player from Balldontlie API.
+     * This is to find home team away team score because /stats endpoint don't have it
+     */
+    public JsonNode getGameById(Long gameApiId) {
+        JsonNode root = client.get()
+                .uri(uriBuilder -> uriBuilder.path("/games/{id}").build(gameApiId))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+
+        if (root != null && root.has("data")) {
+            return root.get("data");
+        }
+        return root;
     }
 }

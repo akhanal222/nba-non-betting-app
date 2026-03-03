@@ -4,6 +4,7 @@ import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.entity.Player;
 import com.nba.nbanonbettingapp.entity.Team;
+import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import com.nba.nbanonbettingapp.repository.PlayerRepository;
 import com.nba.nbanonbettingapp.repository.TeamRepository;
 import org.springframework.stereotype.Service;
@@ -21,14 +22,17 @@ public class PlayerSearchService {
 
     // Service that calls the external Balldontlie API
     private final BalldontlieService balldontlieService;
+    private final NbaPlayerLookupRepository nbaLookupRepository;
 
     // Dependency injection through constructor
     public PlayerSearchService(PlayerRepository playerRepository,
                                TeamRepository teamRepository,
-                               BalldontlieService balldontlieService) {
+                               BalldontlieService balldontlieService,
+                               NbaPlayerLookupRepository nbaLookupRepository) {
         this.playerRepository = playerRepository;
         this.teamRepository = teamRepository;
         this.balldontlieService = balldontlieService;
+        this.nbaLookupRepository = nbaLookupRepository;
     }
 
     /**
@@ -136,6 +140,11 @@ public class PlayerSearchService {
                             // Link player to team (sets team_id FK)
                             p.setTeam(team); //sets team_id
                         }
+                        String fullName = (dto.firstName() + " " + dto.lastName()).trim();
+
+                        // Try exact name match first
+                        nbaLookupRepository.findFirstByPlayerNameIgnoreCase(fullName)
+                                .ifPresent(l -> p.setNbaPlayerId(l.getNbaPlayerId()));
                         // Save new team and return it
                         return playerRepository.save(p);
                     });

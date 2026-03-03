@@ -1,5 +1,6 @@
 package com.nba.nbanonbettingapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -72,6 +73,7 @@ public class PlayerGameStatistic {
     private Player player;
 
     // Many stats -> one team
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;

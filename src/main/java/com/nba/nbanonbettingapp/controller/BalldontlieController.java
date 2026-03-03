@@ -22,10 +22,10 @@ public class BalldontlieController {
         return service.searchPlayers(q);
     }
     // Search specific games
-    @GetMapping("/bdl/games")
-    public Object getGames() {
-        return service.getGames();
-    }
+//    @GetMapping("/bdl/games")
+//    public Object getGames() {
+//        return service.getGames();
+//    }
 
     // Get all teams in the NBA
     @GetMapping("/bdl/teams")
