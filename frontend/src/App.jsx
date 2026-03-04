@@ -1,114 +1,164 @@
-import { useEffect, useState } from "react";
 import "./App.css";
+import { useEffect, useState } from "react";
+import NavBar from "./components/NavBar";
+import PlayerCard from "./components/PlayerCard";
+import AnalyzePanel from "./components/AnalyzePanel";
+
+// All the Endpoint(Testing backend, get all the teams, and search player)
+const API = {
+  test: "http://localhost:8080/test",
+  teams: "http://localhost:8080/bdl/teams",
+  playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
+};
+
+// Filter options (This is for next week )
+const TEAM_FILTERS = ["All Teams", "Lakers", "Warriors", "Celtics", "Suns", "Nets"];
+
 
 export default function App() {
-  const [count, setCount] = useState(0);
-  const [msg, setMsg] = useState("Loading...");
+  const [activePage, setActivePage] = useState("Home");
   const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [players, setPlayers] = useState([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState("All Teams");
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
-  // Test backend connection on page load
+  // Checking if backend is running or not
   useEffect(() => {
-    fetch("http://localhost:8080/test") // Checking backend is running or not
-      .then((r) => r.text())
-      .then(setMsg)
-      .catch(() => setMsg("Backend not reachable"));
+    fetch(API.test).catch(() => {});
+    fetch(API.teams)
+      .then((res) => res.json())
+      .then((data) => setTeams(data.data || data))
+      .catch(() => {});
   }, []);
 
-  const loadTeams = () => {
-    setLoading(true);
-
-    // test that the external api is connceted to show up in the front page
-    fetch("http://localhost:8080/bdl/teams") // Get all the teams in the nba this is for testing
+  // Search players by name
+  const searchPlayers = () => {
+    const query = q.trim();
+    if (query.length < 2) return;
+    setLoadingPlayers(true);
+    setHasSearched(true);
+    fetch(API.playerSearch(query))
       .then((res) => res.json())
-      .then((data) => {
-        setTeams(data.data || data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+      .then((data) => { setPlayers(Array.isArray(data) ? data : []); setLoadingPlayers(false); })
+      .catch(() => setLoadingPlayers(false));
   };
-    const searchPlayers = () => {
-        const query = q.trim();
-        if (query.length < 2) return;
 
-        setLoadingPlayers(true);
-
-        fetch(`http://localhost:8080/api/players/search?q=${encodeURIComponent(query)}`) // Search player endpoint
-            .then((res) => res.json())
-            .then((data) => {
-                setPlayers(Array.isArray(data) ? data : []);
-                setLoadingPlayers(false);
-            })
-            .catch((err) => {
-                console.error(err);
-                setLoadingPlayers(false);
-            });
-    };
+  // Filter by team only ( This is placeholder for next week work )
+  const filteredPlayers = players.filter((p) => {
+    if (selectedTeam !== "All Teams") {
+      const abbr = (p.team?.abbreviation ?? "").toLowerCase();
+      const name = (p.team?.teamName ?? "").toLowerCase();
+      if (!abbr.includes(selectedTeam.toLowerCase()) && !name.includes(selectedTeam.toLowerCase())) return false;
+    }
+    return true;
+  });
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>NBA App</h1>
+    <>
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
 
-      <p>Backend says: {msg}</p>
+        .player-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 24px;
+        }
+        .pill {
+          padding: 7px 18px; border-radius: 999px;
+          border: 1.5px solid #2a2f44; background: transparent; color: #888;
+          font-size: 0.85rem; font-weight: 600; cursor: pointer;
+          transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
+          font-family: inherit;
+        }
+        .pill:hover  { border-color: #4f7cff; color: #fff; }
+        .pill.active { background: #2a3be0; border-color: #2a3be0; color: #fff; }
+        .nav-btn {
+          background: none; border: none; cursor: pointer;
+          font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em;
+          color: #555; transition: color 0.15s; padding: 4px 0; font-family: inherit;
+        }
+        .nav-btn:hover  { color: #fff; }
+        .nav-btn.active { color: #4f7cff; }
+        .tab-btn {
+          padding: 7px 22px; border-radius: 8px; border: none; cursor: pointer;
+          font-size: 0.9rem; font-weight: 700; letter-spacing: 0.05em;
+          transition: all 0.15s; font-family: inherit;
+        }
+        .tab-btn.active   { background: #2a3be0; color: #fff; }
+        .tab-btn.inactive { background: #1a1f2e; color: #666; }
+      `}</style>
 
-      <div className="card">
-        <button onClick={() => setCount((c) => c + 1)}>
-          count is {count}
-        </button>
-      </div>
+      <div style={{ minHeight: "100vh", background: "#0a0c14", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
-      <hr />
-
-      <h2>NBA Teams</h2>
-
-        <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search player (ex: lebron james)"
+        {/* import navbar with button */}
+        <NavBar
+          activePage={activePage}
+          setActivePage={setActivePage}
+          teams={teams}
         />
 
-        <button onClick={searchPlayers} disabled={loadingPlayers}>
-            {loadingPlayers ? "Searching..." : "Search Player"}
-        </button>
+        {/* Heading  */}
+        <main style={{ padding: "40px 0", textAlign: "left" }}>
 
-        {players.map((player) => (
-            <div key={player.playerId}>
-                {player.nbaPlayerId && (
-                    <img
-                        src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`}
-                        alt={`${player.firstName} ${player.lastName}`}
-                        style={{ width: "120px", height: "auto" }}
-                    />
-                )}
-                <p>Name: {player.firstName} {player.lastName}</p>
-                <p>Jersey Number: {player.jerseyNumber ?? "—"}</p>
-                <p>Height: {player.height ?? "—"}</p>
-                <p>Weight: {player.weight ?? "—"}</p>
-                <p>Position: {player.position || "—"}</p>
+          <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: "#fff", marginBottom: 22 }}>
+            Select Players
+          </h1>
 
-                <p>Team Name: {player.team?.teamName ?? "—"}</p>
-                <p>{player.team?.abbreviation ?? ""}</p>
-                <p>{player.team?.city ?? ""}</p>
-                <p>{player.team?.conference ?? ""}</p>
-                <p>{player.team?.division ?? ""}</p>
+          {/* Player Search Bar */}
+          <div style={{
+            display: "flex", alignItems: "center",
+            background: "#111620", border: "1.5px solid #1e2333",
+            borderRadius: 10, padding: "0 16px",
+            maxWidth: 480, marginBottom: 22,
+          }}>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchPlayers()}
+              placeholder="Search by player name...."
+              style={{
+                flex: 1, background: "transparent", border: "none", outline: "none",
+                color: "#ccc", fontSize: "0.9rem", padding: "13px 0", fontFamily: "inherit",
+              }}
+            />
+            <button onClick={searchPlayers}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
+              onMouseLeave={e => e.currentTarget.style.color = "#555"}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* ── Player Grid ── */}
+          {loadingPlayers ? (
+            <p style={{ color: "#555" }}>Searching...</p>
+          ) : filteredPlayers.length > 0 ? (
+            <div className="player-grid">
+              {filteredPlayers.map((player) => (
+                <PlayerCard
+                  key={player.playerId}
+                  player={player}
+                  selected={selectedPlayer?.playerId === player.playerId}
+                  onAnalyze={(p) => setSelectedPlayer(selectedPlayer?.playerId === p.playerId ? null : p)}
+                />
+              ))}
             </div>
-        ))}
+          ) : hasSearched ? (
+            <p style={{ color: "#444" }}>No players found.</p>
+          ) : null}
 
-      <button onClick={loadTeams}>Load Teams</button>'
-      {loading && <p>Loading...</p>}
+          {/* Detail Panel of the player */}
+          {selectedPlayer && <AnalyzePanel player={selectedPlayer} />}
 
-      {teams.map((team) => (
-        <div key={team.id}>
-          <p>{team.full_name}</p>
-        </div>
-
-      ))}
-    </div>
+        </main>
+      </div>
+    </>
   );
 }
