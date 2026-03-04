@@ -21,6 +21,7 @@ System can fetch and store real NBA data
 | Safe date parsing implemented                                       | Completed |
 | nba_player_lookup table integrated<br/>(For getting photo of the player) | Completed |
 | NBA headshot rendering in frontend                                  | Completed |
+|Frontend page added with search and all team lookup                                | Completed |
 ---
 ## Week 1: Architecture & Foundation
 
