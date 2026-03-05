@@ -40,6 +40,9 @@ public class Team {
     @Column(name = "division")
     private String division;
 
+    @Column(name = "nba_team_id")
+    private Long nbaTeamId;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 

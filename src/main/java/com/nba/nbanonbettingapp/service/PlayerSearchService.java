@@ -6,6 +6,7 @@ import com.nba.nbanonbettingapp.entity.Player;
 import com.nba.nbanonbettingapp.entity.Team;
 import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import com.nba.nbanonbettingapp.repository.PlayerRepository;
+import com.nba.nbanonbettingapp.repository.TeamLogoLookupRepository;
 import com.nba.nbanonbettingapp.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 
@@ -23,16 +24,20 @@ public class PlayerSearchService {
     // Service that calls the external Balldontlie API
     private final BalldontlieService balldontlieService;
     private final NbaPlayerLookupRepository nbaLookupRepository;
+    private final TeamLogoLookupRepository teamLogoLookupRepository;
+
 
     // Dependency injection through constructor
     public PlayerSearchService(PlayerRepository playerRepository,
                                TeamRepository teamRepository,
                                BalldontlieService balldontlieService,
-                               NbaPlayerLookupRepository nbaLookupRepository) {
+                               NbaPlayerLookupRepository nbaLookupRepository,
+                               TeamLogoLookupRepository teamLogoLookupRepository) {
         this.playerRepository = playerRepository;
         this.teamRepository = teamRepository;
         this.balldontlieService = balldontlieService;
         this.nbaLookupRepository = nbaLookupRepository;
+        this.teamLogoLookupRepository =teamLogoLookupRepository;
     }
 
     /**
@@ -133,10 +138,24 @@ public class PlayerSearchService {
                                         t.setAbbreviation(dto.team().abbreviation());
                                         t.setConference(dto.team().conference());
                                         t.setDivision(dto.team().division());
-
                                         t.setCreatedAt(OffsetDateTime.now());
+                                        if (t.getAbbreviation() != null) {
+                                            teamLogoLookupRepository
+                                                    .findByAbbreviationIgnoreCase(t.getAbbreviation())
+                                                    .ifPresent(l -> t.setNbaTeamId(l.getNbaTeamId()));
+                                        }
+
                                         return teamRepository.save(t);
                                     });
+                            // Backfill nbaTeamId even for existing teams
+                            if (team.getNbaTeamId() == null && team.getAbbreviation() != null) {
+                                teamLogoLookupRepository
+                                        .findByAbbreviationIgnoreCase(team.getAbbreviation())
+                                        .ifPresent(l -> {
+                                            team.setNbaTeamId(l.getNbaTeamId());
+                                            teamRepository.save(team);
+                                        });
+                            }
                             // Link player to team (sets team_id FK)
                             p.setTeam(team); //sets team_id
                         }

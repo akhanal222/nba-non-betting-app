@@ -59,7 +59,12 @@ export default function PlayerCard({ player, onAnalyze, selected }) {
       </div>
 
       {/* Stats of the player when searched */}
-      <div style={{ display: "flex", gap: 18 }}>
+      <div style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 18,
+          marginTop: 10,
+      }}>
         <StatBadge value={player.position} label="Pos" />
         <StatBadge value={player.team.abbreviation} label="Team" />
         <StatBadge value={player.jerseyNumber} label="#" />

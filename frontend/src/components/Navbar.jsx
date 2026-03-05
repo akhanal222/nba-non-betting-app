@@ -50,6 +50,7 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
             cursor: "pointer",
             transition: "all 0.2s",
           }}
+
        // Hover effect only when teams panel is closed
           onMouseEnter={e => { if (!showTeams) { e.currentTarget.style.borderColor = "#4f7cff"; e.currentTarget.style.color = "#fff"; }}}
           onMouseLeave={e => { if (!showTeams) { e.currentTarget.style.borderColor = "#2a2f44"; e.currentTarget.style.color = "#888"; }}}
@@ -57,6 +58,18 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           {showTeams ? "Hide Teams" : "All Teams"}
         </button>
       </nav>
+        {/* Home / Analysis Tabs */}
+        <div style={{ padding: "14px 0", display: "flex", gap: 10, borderBottom: "1px solid #111620" }}>
+            {["Home", "Analysis"].map((tab) => (
+                <button
+                    key={tab}
+                    className={`tab-btn ${tab === activePage ? "active" : "inactive"}`}
+                    onClick={() => setActivePage(tab)}
+                >
+                    {tab}
+                </button>
+            ))}
+        </div>
 
       {/* Teams Panel */}
       {showTeams && (
@@ -65,13 +78,15 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           borderBottom: "1px solid #111620",
           padding: "24px 32px",
         }}>
-          <h3 style={{ color: "#fff", fontSize: "1rem", fontWeight: 700, marginBottom: 16, letterSpacing: "0.05em" }}>
+          <h3 style={{ color: "#fff", fontSize: "1rem", fontWeight: 700, marginBottom: 16, letterSpacing: "0.05em", textAlign: "center" }}>
             NBA Teams
           </h3>
           <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            gap: 12,
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 16,
+              maxWidth: 1000,
+              margin: "0 auto"
           }}>
             {teams.map((team) => (
               <div key={team.id} style={{
@@ -83,13 +98,20 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
                 flexDirection: "column",
                 gap: 4,
               }}>
+                  <div key={team.teamId} style= {{display: "flex", justifyContent: "center", marginBottom: 8}}>
+                      <img
+                          src={`https://cdn.nba.com/logos/nba/${team.nbaTeamId}/primary/L/logo.svg`}
+                          alt={`${team.teamName} logo`}
+                          style={{ width: 100, height: 100 }}
+                      />
+                  </div>
                 <span style={{ color: "#4f7cff", fontWeight: 700, fontSize: "0.95rem" }}>
                   {team.abbreviation}
                 </span>
                 <span style={{ color: "#fff", fontWeight: 600, fontSize: "0.85rem" }}>
                   {team.full_name}
                 </span>
-                <span style={{ color: "#555", fontSize: "0.75rem" }}>
+                <span style={{ color: "ghostwhite ", fontSize: "0.75rem" }}>
                   {team.city} • {team.conference ?? ""}
                 </span>
               </div>
@@ -97,19 +119,6 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           </div>
         </div>
       )}
-
-      {/* Home / Analysis Tabs */}
-      <div style={{ padding: "14px 0", display: "flex", gap: 10, borderBottom: "1px solid #111620" }}>
-        {["Home", "Analysis"].map((tab) => (
-          <button
-            key={tab}
-            className={`tab-btn ${tab === activePage ? "active" : "inactive"}`}
-            onClick={() => setActivePage(tab)}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
     </>
   );
 }

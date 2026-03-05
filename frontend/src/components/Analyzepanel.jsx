@@ -15,12 +15,15 @@ function AnalyzePanel({ player }) {
 
   return (
     <div style={{
-      marginTop: 36,
-      background: "#111620",
-      border: "1.5px solid #1e2333",
-      borderRadius: 14,
-      padding: "28px 32px",
-      textAlign: "left",
+        marginTop: 36,
+        background: "#111620",
+        border: "1.5px solid #1e2333",
+        borderRadius: 14,
+        padding: "28px 32px",
+        textAlign: "left",
+        maxWidth: 700,
+        marginLeft: "auto",
+        marginRight: "auto"
     }}>
       <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#fff", marginBottom: 18 }}>
         {player.firstName} {player.lastName}

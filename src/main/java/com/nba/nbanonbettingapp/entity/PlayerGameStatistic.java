@@ -62,6 +62,9 @@ public class PlayerGameStatistic {
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
+    @Column(name = "synced_at")
+    private OffsetDateTime syncedAt;
+
     // Many stats -> one game
     @ManyToOne
     @JoinColumn(name = "game_id")

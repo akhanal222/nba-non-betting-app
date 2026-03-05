@@ -11,7 +11,7 @@ import com.nba.nbanonbettingapp.repository.PlayerRepository;
 import com.nba.nbanonbettingapp.repository.TeamRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
@@ -67,8 +67,18 @@ public class PlayerStatsService {
                 playerId, PageRequest.of(0, limit)
         );
 
-        // If DB already has enough rows, return
-        if (db.size() >= limit) return db;
+        OffsetDateTime lastSync = statRepository
+                .findLatestSyncedAtByPlayerId(playerId)
+                .orElse(null);
+
+        boolean stale = lastSync == null ||
+                Duration.between(lastSync, OffsetDateTime.now()).toHours() >= 12;
+
+// If stats are fresh AND we already have enough rows, return DB
+        if (!stale && db.size() >= limit) {
+            return db;
+        }
+
 
         // Need to fetch more (or DB empty)
         Player player = playerRepository.findById(playerId)
@@ -91,6 +101,7 @@ public class PlayerStatsService {
                 .toList();
 
         // Save stats + games (+ teams) for up to limit games
+        OffsetDateTime now = OffsetDateTime.now();
         for (var s : sorted) {
 
             Long gameApiId = s.game().id().longValue();
@@ -135,7 +146,8 @@ public class PlayerStatsService {
             stat.setFreeThrowsMade(s.ftm());
             stat.setFreeThrowsAttempted(s.fta());
 
-            if (stat.getCreatedAt() == null) stat.setCreatedAt(OffsetDateTime.now());
+            if (stat.getCreatedAt() == null) stat.setCreatedAt(now);
+            stat.setSyncedAt(now);
 
             statRepository.save(stat);
         }

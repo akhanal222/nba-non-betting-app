@@ -1,5 +1,6 @@
 package com.nba.nbanonbettingapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,6 +55,7 @@ public class Game {
     private Team awayTeam;
 
     // One game -> many player stats
+    @JsonIgnore
     @OneToMany(mappedBy = "game")
     private List<PlayerGameStatistic> playerStats = new ArrayList<>();
 

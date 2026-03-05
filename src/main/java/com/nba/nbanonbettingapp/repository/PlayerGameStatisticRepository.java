@@ -3,6 +3,8 @@ package com.nba.nbanonbettingapp.repository;
 import com.nba.nbanonbettingapp.entity.PlayerGameStatistic;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import java.time.OffsetDateTime;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,4 +13,6 @@ public interface PlayerGameStatisticRepository extends JpaRepository<PlayerGameS
     // Recent stats for a player, ordered by game date (newest first), with dynamic limit
     List<PlayerGameStatistic> findByPlayer_PlayerIdOrderByGame_GameDateDesc(Long playerId, Pageable pageable);
     Optional<PlayerGameStatistic> findByGame_GameIdAndPlayer_PlayerId(Long gameId, Long playerId);
+    @Query("select max(s.syncedAt) from PlayerGameStatistic s where s.player.playerId = :playerId")
+    Optional<OffsetDateTime> findLatestSyncedAtByPlayerId(Long playerId);
 }

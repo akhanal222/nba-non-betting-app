@@ -7,7 +7,7 @@ import AnalyzePanel from "./components/AnalyzePanel";
 // All the Endpoint(Testing backend, get all the teams, and search player)
 const API = {
   test: "http://localhost:8080/test",
-  teams: "http://localhost:8080/bdl/teams",
+  teams: "http://localhost:8080/teams",
   playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
 };
 
@@ -55,6 +55,8 @@ export default function App() {
     }
     return true;
   });
+  const teamLogoUrl = (nbaTeamId) =>
+      nbaTeamId ? `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg` : "";
 
   return (
     <>
@@ -63,9 +65,12 @@ export default function App() {
         body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
 
         .player-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
         .pill {
           padding: 7px 18px; border-radius: 999px;
@@ -104,16 +109,20 @@ export default function App() {
         {/* Heading  */}
         <main style={{ padding: "40px 0", textAlign: "left" }}>
 
-          <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: "#fff", marginBottom: 22 }}>
+          <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: "#fff", marginBottom: 22,textAlign: "center" }}>
             Select Players
           </h1>
 
           {/* Player Search Bar */}
           <div style={{
-            display: "flex", alignItems: "center",
-            background: "#111620", border: "1.5px solid #1e2333",
-            borderRadius: 10, padding: "0 16px",
-            maxWidth: 480, marginBottom: 22,
+            display: "flex",
+            alignItems: "center",
+            background: "#111620",
+            border: "1.5px solid #1e2333",
+            borderRadius: 10,
+            padding: "0 16px",
+            maxWidth: 480,
+            margin: "0 auto 22px auto"
           }}>
             <input
               value={q}
