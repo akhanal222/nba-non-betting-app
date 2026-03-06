@@ -1,14 +1,14 @@
 package com.nba.nbanonbettingapp.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.nba.nbanonbettingapp.dto.BdlGameDTO;
 import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-
+import com.nba.nbanonbettingapp.dto.BdlGameDTO;
+import java.time.LocalDate;
 @Service
 public class BalldontlieService {
 
@@ -105,5 +105,22 @@ public class BalldontlieService {
             return root.get("data");
         }
         return root;
+    }
+    //http://localhost:8080/bdl/games/upcoming?days=7
+    public BdlResponseDTO<BdlGameDTO> getUpcomingGames(int days) {
+        if (days <= 0) days = 7;
+
+        LocalDate start = LocalDate.now();
+        LocalDate end = start.plusDays(days);
+
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/games")
+                        .queryParam("start_date", start.toString())
+                        .queryParam("end_date", end.toString())
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
     }
 }

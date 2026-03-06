@@ -9,6 +9,7 @@ const API = {
   test: "http://localhost:8080/test",
   teams: "http://localhost:8080/teams",
   playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
+  upcomingGames: "http://localhost:8080/bdl/games/upcoming?days=2",
 };
 
 // Filter options (This is for next week )
@@ -24,6 +25,8 @@ export default function App() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("All Teams");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [upcomingGames, setUpcomingGames] = useState([]);
+  const [loadingGames, setLoadingGames] = useState(false);
 
   // Checking if backend is running or not
   useEffect(() => {
@@ -32,7 +35,17 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => setTeams(data.data || data))
       .catch(() => {});
+    // Fetch upcoming games
+    setLoadingGames(true);
+    fetch(API.upcomingGames)
+        .then((res) => res.json())
+        .then((data) => {
+          setUpcomingGames(Array.isArray(data) ? data : data.data || []);
+          setLoadingGames(false);
+        })
+        .catch(() => setLoadingGames(false));
   }, []);
+
 
   // Search players by name
   const searchPlayers = () => {
@@ -58,44 +71,29 @@ export default function App() {
   const teamLogoUrl = (nbaTeamId) =>
       nbaTeamId ? `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg` : "";
 
+  const NBA_ID_OVERRIDES = {
+    UTA: 1610612762,
+    NOP: 1610612740,
+  };
+
+  const teamLogoByAbbr = (abbr) => {
+    if (!abbr) return "";
+    if (NBA_ID_OVERRIDES[abbr.toUpperCase()]) {
+      const id = NBA_ID_OVERRIDES[abbr.toUpperCase()];
+      return `https://cdn.nba.com/logos/nba/${id}/primary/L/logo.svg`;
+    }
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${abbr.toLowerCase()}.png`;
+  };
+
+  // Helper: format date nicely
+  const formatGameDate = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
+
   return (
     <>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
-
-        .player-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-        .pill {
-          padding: 7px 18px; border-radius: 999px;
-          border: 1.5px solid #2a2f44; background: transparent; color: #888;
-          font-size: 0.85rem; font-weight: 600; cursor: pointer;
-          transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
-          font-family: inherit;
-        }
-        .pill:hover  { border-color: #4f7cff; color: #fff; }
-        .pill.active { background: #2a3be0; border-color: #2a3be0; color: #fff; }
-        .nav-btn {
-          background: none; border: none; cursor: pointer;
-          font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em;
-          color: #555; transition: color 0.15s; padding: 4px 0; font-family: inherit;
-        }
-        .nav-btn:hover  { color: #fff; }
-        .nav-btn.active { color: #4f7cff; }
-        .tab-btn {
-          padding: 7px 22px; border-radius: 8px; border: none; cursor: pointer;
-          font-size: 0.9rem; font-weight: 700; letter-spacing: 0.05em;
-          transition: all 0.15s; font-family: inherit;
-        }
-        .tab-btn.active   { background: #2a3be0; color: #fff; }
-        .tab-btn.inactive { background: #1a1f2e; color: #666; }
-      `}</style>
 
       <div style={{ minHeight: "100vh", background: "#0a0c14", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
@@ -105,6 +103,51 @@ export default function App() {
           setActivePage={setActivePage}
           teams={teams}
         />
+        {/* Upcoming Games Section */}
+        <section className="games-section">
+          <h2>Upcoming Games</h2>
+
+          {loadingGames ? (
+              <p style={{ color: "#444", fontSize: "0.85rem" }}>Loading games...</p>
+          ) : upcomingGames.length === 0 ? (
+              <p style={{ color: "#444", fontSize: "0.85rem" }}>No upcoming games found.</p>
+          ) : (
+              <div className="games-scroll">
+                {upcomingGames.map((game, i) => (
+                    <div className="game-card" key={game.id ?? i}>
+                      <div className="game-date">{formatGameDate(game.date)}</div>
+                      <div className="game-matchup">
+                        <div className="game-team">
+                          <img
+                              src={teamLogoByAbbr(game.home_team?.abbreviation)}
+                              alt={game.home_team?.abbreviation}
+                              onError={(e) => { e.target.style.display = "none"; }}
+                          />
+                          <span className="game-team-abbr">
+                          {game.home_team?.abbreviation ?? game.home_team?.full_name ?? "—"}
+                        </span>
+                        </div>
+                        <span className="game-vs">VS</span>
+                        <div className="game-team">
+                          <img
+                              src={teamLogoByAbbr(game.visitor_team?.abbreviation)}
+                              alt={game.visitor_team?.abbreviation}
+                              onError={(e) => { e.target.style.display = "none"; }}
+                          />
+                          <span className="game-team-abbr">
+                          {game.visitor_team?.abbreviation ?? game.visitor_team?.full_name ?? "—"}
+                        </span>
+                        </div>
+                      </div>
+                      {game.status && (
+                          <div className="game-time">{game.status}</div>
+                      )}
+                    </div>
+                ))}
+              </div>
+          )}
+        </section>
+
 
         {/* Heading  */}
         <main style={{ padding: "40px 0", textAlign: "left" }}>
