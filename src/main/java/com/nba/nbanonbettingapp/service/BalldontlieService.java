@@ -8,6 +8,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import com.nba.nbanonbettingapp.dto.BdlGameDTO;
+import com.nba.nbanonbettingapp.dto.BdlLineupDTO;
 import java.time.LocalDate;
 @Service
 public class BalldontlieService {
@@ -113,7 +114,7 @@ public class BalldontlieService {
         LocalDate start = LocalDate.now();
         LocalDate end = start.plusDays(days);
 
-        return client.get()
+        BdlResponseDTO<BdlGameDTO> response = client.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/games")
                         .queryParam("start_date", start.toString())
@@ -122,5 +123,66 @@ public class BalldontlieService {
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
+
+        if (response == null || response.data() == null) {
+            return response;
+        }
+
+        var filteredGames = response.data().stream()
+                .filter(game -> game.date() != null && game.date().length() >= 10)
+                .filter(game -> {
+                    LocalDate gameDate = LocalDate.parse(game.date().substring(0, 10));
+                    return !gameDate.isBefore(start);
+                })
+                .toList();
+
+        return new BdlResponseDTO<>(filteredGames, response.meta());
+    }
+    public BdlResponseDTO<BdlLineupDTO> getLineupsByGameId(Long gameId) {
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/lineups")
+                        .queryParam("game_ids[]", gameId)
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+    public BdlResponseDTO<BdlStatDTO> getStatsByGameId(Long gameId) {
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/stats")
+                        .queryParam("game_ids[]", gameId)
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+    public BdlResponseDTO<BdlGameDTO> getRecentCompletedGames(int days) {
+        if (days <= 0) days = 2;
+
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(days);
+
+        BdlResponseDTO<BdlGameDTO> response = client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/games")
+                        .queryParam("start_date", start.toString())
+                        .queryParam("end_date", end.toString())
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+
+        if (response == null || response.data() == null) {
+            return response;
+        }
+
+        var completedGames = response.data().stream()
+                .filter(game -> game.status() != null)
+                .filter(game -> game.status().equalsIgnoreCase("Final"))
+                .toList();
+
+        return new BdlResponseDTO<>(completedGames, response.meta());
     }
 }
