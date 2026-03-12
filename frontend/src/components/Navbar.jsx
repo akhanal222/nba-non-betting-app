@@ -20,7 +20,7 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
         gap: 40,
       }}>
 {/*    Logo of the app */}
-          <div style={{ position: "absolute", left: 24, display: "flex", alignItems: "center" }}>
+          <div style={{ position: "absolute", left: 24, marginTop:30, display: "flex", alignItems: "center" }}>
             <img
               src={NbaLogo}
               alt="NBA Logo"
@@ -59,7 +59,7 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
         </button>
       </nav>
         {/* Home / Analysis Tabs */}
-        <div style={{ padding: "14px 0", display: "flex", gap: 10, borderBottom: "1px solid #111620" }}>
+        <div style={{ padding: "14px 0", display: "flex", gap: 10, marginTop:30, borderBottom: "1px solid #111620" }}>
             {["Home", "Analysis"].map((tab) => (
                 <button
                     key={tab}

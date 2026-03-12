@@ -1,13 +1,10 @@
 package com.nba.nbanonbettingapp.controller;
 
-import com.nba.nbanonbettingapp.dto.BdlGameDTO;
-import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
-import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.nba.nbanonbettingapp.dto.*;
 import com.nba.nbanonbettingapp.service.BalldontlieService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/bdl")
@@ -29,6 +26,15 @@ public class BalldontlieController {
     public Object getGames() {
         return service.getGames();
     }
+    @GetMapping("/games/{id}")
+    public JsonNode getGameById(@PathVariable Long id) {
+        return service.getGameById(id);
+    }
+
+    @GetMapping("/games/{id}/lineups")
+    public BdlResponseDTO<BdlLineupDTO> getGameLineups(@PathVariable Long id) {
+        return service.getLineupsByGameId(id);
+    }
 
     // Get all teams in the NBA
     @GetMapping("/teams")
@@ -41,5 +47,15 @@ public class BalldontlieController {
             @RequestParam(defaultValue = "3") int days
     ) {
         return service.getUpcomingGames(days);
+    }
+    @GetMapping("/games/{id}/stats")
+    public BdlResponseDTO<BdlStatDTO> getGameStats(@PathVariable Long id) {
+        return service.getStatsByGameId(id);
+    }
+    @GetMapping("/games/completed")
+    public BdlResponseDTO<BdlGameDTO> completedGames(
+            @RequestParam(defaultValue = "2") int days
+    ) {
+        return service.getRecentCompletedGames(days);
     }
 }
