@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import com.nba.nbanonbettingapp.dto.BdlGameDTO;
 import java.time.LocalDate;
+import java.util.List;
 @Service
 public class BalldontlieService {
 
@@ -88,6 +89,125 @@ public class BalldontlieService {
                         .queryParam("player_ids[]", playerApiId)
                         .queryParam("per_page", perPage) // set 50 or 100
                         .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+    /**
+     * Fetches all games for a given team, paginated by cursor.
+     *
+     * Uses team_ids[] filter — returns every game the team has played.
+     * Each game object includes home_team and visitor_team with full details,
+     * so the caller can extract game IDs for the /stats lookup.
+     *
+     * @param teamApiId  BallDontLie team ID (e.g. 8 for Denver Nuggets)
+     * @param perPage    Results per page (max 100)
+     * @param cursor     Pagination cursor, or null for first page
+     */
+    public BdlResponseDTO<BdlGameDTO> getGamesByTeam(Long teamApiId, List<Integer> seasons,
+                                                     int perPage, Integer cursor) {
+        return client.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/games")
+                            .queryParam("team_ids[]", teamApiId)
+                            .queryParam("per_page", perPage);
+                    if (seasons != null) {
+                        for (Integer season : seasons) {
+                            builder = builder.queryParam("seasons[]", season);
+                        }
+                    }
+                    if (cursor != null) {
+                        builder = builder.queryParam("cursor", cursor);
+                    }
+                    return builder.build();
+                })
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    /**
+     * Fetches stats for a player filtered to a specific list of game IDs.
+     *
+     * This is the correct way to do opponent filtering on BallDontLie:
+     *   1. Get the opponent's game IDs via getGamesByTeam()
+     *   2. Pass those IDs here to get only the player's stats in those games
+     *
+     * URL length limit: don't pass more than ~50 game IDs at once.
+     * HeadToHeadService handles batching automatically.
+     *
+     * @param playerApiId  BallDontLie player ID
+     * @param gameIds      List of game IDs to filter by (max ~50 per call)
+     * @param cursor       Pagination cursor, or null for first page
+     */
+    public BdlResponseDTO<BdlStatDTO> getStatsByPlayerAndGames(Long playerApiId,
+                                                               List<Long> gameIds,
+                                                               Integer cursor) {
+        return client.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/stats")
+                            .queryParam("player_ids[]", playerApiId)
+                            .queryParam("per_page", 100);
+
+                    for (Long gameId : gameIds) {
+                        builder = builder.queryParam("game_ids[]", gameId);
+                    }
+                    if (cursor != null) {
+                        builder = builder.queryParam("cursor", cursor);
+                    }
+                    return builder.build();
+                })
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    /**
+     * Fetches a single team by its BallDontLie team ID.
+     * Used to resolve the opponent's display name (e.g. "Denver Nuggets").
+     *
+     * Response JSON: { "data": { "id": 8, "full_name": "Denver Nuggets", ... } }
+     * Returns the unwrapped "data" node directly.
+     *
+     * @param teamApiId  BallDontLie team ID
+     * @return           JsonNode of the team object, or null if not found
+     */
+    public JsonNode getTeamById(Long teamApiId) {
+        JsonNode root = client.get()
+                .uri(uriBuilder -> uriBuilder.path("/teams/{id}").build(teamApiId))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+
+        if (root != null && root.has("data")) {
+            return root.get("data");
+        }
+        return root;
+    }
+    /**
+     * Fetches stats for a player from a given start date onward.
+     * Used by RecentStatsService — seasons[] on /stats is silently ignored by
+     * BallDontLie, but start_date is respected reliably.
+     *
+     * @param playerApiId  BallDontLie player ID
+     * @param startDate    Earliest date to include, format "YYYY-MM-DD"
+     * @param perPage      Results per page (max 100)
+     * @param cursor       Pagination cursor, or null for first page
+     */
+    public BdlResponseDTO<BdlStatDTO> getStatsByPlayerSince(Long playerApiId,
+                                                            String startDate,
+                                                            int perPage,
+                                                            Integer cursor) {
+        return client.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/stats")
+                            .queryParam("player_ids[]", playerApiId)
+                            .queryParam("start_date", startDate)
+                            .queryParam("per_page", perPage);
+                    if (cursor != null) {
+                        builder = builder.queryParam("cursor", cursor);
+                    }
+                    return builder.build();
+                })
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
