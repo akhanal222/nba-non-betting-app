@@ -41,6 +41,9 @@ public class Game {
     @Column(name = "game_status")
     private String gameStatus;
 
+    @Column(name = "postseason")
+    private Boolean postseason;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 

@@ -17,6 +17,8 @@ import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import com.nba.nbanonbettingapp.dto.HeadToHeadResultDTO;
+import com.nba.nbanonbettingapp.dto.StatType;
 
 @Service
 public class PlayerStatsService {
@@ -74,11 +76,10 @@ public class PlayerStatsService {
         boolean stale = lastSync == null ||
                 Duration.between(lastSync, OffsetDateTime.now()).toHours() >= 12;
 
-// If stats are fresh AND we already have enough rows, return DB
+        // If stats are fresh AND we already have enough rows, return DB
         if (!stale && db.size() >= limit) {
             return db;
         }
-
 
         // Need to fetch more (or DB empty)
         Player player = playerRepository.findById(playerId)
@@ -87,9 +88,19 @@ public class PlayerStatsService {
         Long playerApiId = player.getExternalApiId();
         if (playerApiId == null) return db; // return what we have
 
-        var resp = balldontlieService.getStatsByPlayerId(playerApiId, 100);
-        var apiStats = resp.data();
-        if (apiStats == null || apiStats.isEmpty()) return db;
+        // Paginate through all pages — BallDontLie returns oldest-first so we need
+        // all pages to find the most recent games
+        List<com.nba.nbanonbettingapp.dto.BdlStatDTO> apiStats = new java.util.ArrayList<>();
+        Integer cursor = null;
+        do {
+            var resp = balldontlieService.getStatsByPlayerSince(playerApiId, "2021-10-01", 100, cursor);
+            var page = resp.data();
+            if (page == null || page.isEmpty()) break;
+            apiStats.addAll(page);
+            cursor = (resp.meta() != null) ? resp.meta().nextCursor() : null;
+        } while (cursor != null);
+
+        if (apiStats.isEmpty()) return db;
 
         // Sort newest first and take up to "limit"
         var sorted = apiStats.stream()
@@ -158,11 +169,121 @@ public class PlayerStatsService {
         );
     }
 
-    // Helpers Functions
+    /**
+     * Analyzes a player's recent N games and computes prop analytics.
+     *
+     * Reuses getRecentStatsByExternalApiId() for DB-first data fetching and storage,
+     * then applies DNP filter, postseason filter, StatType extraction,
+     * and computes average, stdDev, and hit rate.
+     *
+     * @param playerApiId     BallDontLie player ID (external_api_id)
+     * @param statLine        Sportsbook line (e.g. 15.5)
+     * @param limit           Number of recent games (5, 10, or 15)
+     * @param includePlayoffs Whether to include postseason games
+     * @param statType        Stat to analyze: pts, ast, reb, stl, blk, turnover, fg3m
+     */
+    public HeadToHeadResultDTO analyzeRecentStats(Long playerApiId, double statLine,
+                                                  int limit, boolean includePlayoffs,
+                                                  String statType) {
+
+        // Step 1: Reuse existing method — fetches, stores, returns from DB
+        List<PlayerGameStatistic> recentStats =
+                getRecentStatsByExternalApiId(playerApiId, limit);
+
+        // Step 2: Resolve player name
+        Player player = playerRepository.findByExternalApiId(playerApiId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Player not found with externalApiId: " + playerApiId));
+        String playerName = player.getFirstName() + " " + player.getLastName();
+
+        // Step 3: Resolve stat type
+        StatType stat = StatType.from(statType);
+
+        // Step 4: Apply DNP filter (zero minutes) and optional postseason filter
+        List<PlayerGameStatistic> filteredStats = recentStats.stream()
+                .filter(s -> {
+                    String min = s.getMinutesPlayed();
+                    return min != null && !min.isBlank()
+                            && !min.equals("0") && !min.equals("00")
+                            && !min.equals("0:00") && !min.equals("00:00");
+                })
+                .filter(s -> includePlayoffs ||
+                        s.getGame() == null ||
+                        !Boolean.TRUE.equals(s.getGame().getPostseason()))
+                .toList();
+
+        if (filteredStats.isEmpty()) {
+            throw new RuntimeException(
+                    "No qualifying games found for " + playerName +
+                            " after applying filters. Try increasing the limit or enabling playoffs.");
+        }
+
+        // Step 5: Extract stat values and compute analytics
+        List<Integer> values = filteredStats.stream()
+                .map(s -> extractStatValue(stat, s))
+                .toList();
+
+        double average  = values.stream().mapToInt(i -> i).average().orElse(0.0);
+        double variance = values.stream()
+                .mapToDouble(p -> Math.pow(p - average, 2))
+                .average().orElse(0.0);
+        double stdDev   = Math.sqrt(variance);
+        long   hits     = values.stream().filter(v -> v > statLine).count();
+        double hitRate  = (double) hits / values.size();
+
+        // Step 6: Build per-game result list
+        List<HeadToHeadResultDTO.GameLineResult> gameResults = filteredStats.stream()
+                .map(s -> {
+                    String date = s.getGame() != null && s.getGame().getGameDate() != null
+                            ? s.getGame().getGameDate().toString() : "unknown";
+                    int val = extractStatValue(stat, s);
+                    return new HeadToHeadResultDTO.GameLineResult(date, val, val > statLine);
+                })
+                .toList();
+
+        // Step 7: Return analytics DTO
+        return new HeadToHeadResultDTO(
+                playerName,
+                "All Opponents",
+                stat.getKey(),
+                statLine,
+                gameResults,
+                round(average),
+                round(stdDev),
+                (int) hits,
+                values.size(),
+                round(hitRate)
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper Methods
+    // ─────────────────────────────────────────────────────────────────────────
 
     private int normalizeLimit(int limit) {
         if (limit != 5 && limit != 10 && limit != 15) return 5;
         return limit;
+    }
+
+    /**
+     * Extracts the correct stat value from a PlayerGameStatistic
+     * based on the requested StatType.
+     */
+    private int extractStatValue(StatType stat, PlayerGameStatistic s) {
+        return switch (stat) {
+            case PTS      -> s.getPointsScored()        != null ? s.getPointsScored()        : 0;
+            case REB      -> s.getTotalRebounds()        != null ? s.getTotalRebounds()        : 0;
+            case AST      -> s.getAssists()              != null ? s.getAssists()              : 0;
+            case STL      -> s.getSteals()               != null ? s.getSteals()               : 0;
+            case BLK      -> s.getBlocks()               != null ? s.getBlocks()               : 0;
+            case TURNOVER -> s.getTurnovers()            != null ? s.getTurnovers()            : 0;
+            case FG3M     -> s.getThreePointShotsMade()  != null ? s.getThreePointShotsMade()  : 0;
+        };
+    }
+
+    /** Rounds to 2 decimal places for clean API output. */
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
     /**
@@ -212,6 +333,10 @@ public class PlayerStatsService {
         }
         if (!fullGame.path("status").isMissingNode() && !fullGame.path("status").isNull()) {
             g.setGameStatus(fullGame.path("status").asText());
+        }
+        // Store postseason flag for playoff filtering in analytics
+        if (!fullGame.path("postseason").isMissingNode() && !fullGame.path("postseason").isNull()) {
+            g.setPostseason(fullGame.path("postseason").asBoolean());
         }
 
         g.setHomeTeam(home);
