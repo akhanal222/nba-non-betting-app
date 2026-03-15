@@ -5,6 +5,9 @@ public record BdlGameDTO(
         String date,
         Integer season,
         Boolean postseason,
+        String status,
+        Integer home_team_score,
+        Integer visitor_team_score,
         BdlTeamDTO home_team,
         BdlTeamDTO visitor_team
 ) {}
