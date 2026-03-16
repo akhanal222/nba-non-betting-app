@@ -3,26 +3,31 @@ package com.nba.nbanonbettingapp.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nba.nbanonbettingapp.dto.BdlGameDTO;
+import com.nba.nbanonbettingapp.dto.BdlLineupDTO;
 import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
+import com.nba.nbanonbettingapp.dto.PlayerWithImageDTO;
+import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import com.nba.nbanonbettingapp.dto.BdlGameDTO;
-import com.nba.nbanonbettingapp.dto.BdlLineupDTO;
 import java.time.LocalDate;
 import java.util.List;
 @Service
 public class BalldontlieService {
 
     private final RestClient client;
+    private final NbaPlayerLookupRepository nbaLookupRepository;
 
-    public BalldontlieService(RestClient balldontlieRestClient) {
+    public BalldontlieService(RestClient balldontlieRestClient,
+                              NbaPlayerLookupRepository nbaLookupRepository) {
         this.client = balldontlieRestClient;
+        this.nbaLookupRepository = nbaLookupRepository;
     }
 
-//    This is for getting player Information
+    // This is for getting player Information
     /**
      * General player search using the "search" query parameter.
      * Supports partial name matching (single search input).
@@ -102,8 +107,8 @@ public class BalldontlieService {
      * Each game object includes home_team and visitor_team with full details,
      * so the caller can extract game IDs for the /stats lookup.
      *
-     * @param teamApiId  BallDontLie team ID (e.g. 8 for Denver Nuggets)
-     * @param perPage    Results per page (max 100)
+     * @param teamApiId  BallDontLie team ID
+     * @param perPage    Results per page
      * @param cursor     Pagination cursor, or null for first page
      */
     public BdlResponseDTO<BdlGameDTO> getGamesByTeam(Long teamApiId, List<Integer> seasons,
@@ -130,17 +135,6 @@ public class BalldontlieService {
 
     /**
      * Fetches stats for a player filtered to a specific list of game IDs.
-     *
-     * This is the correct way to do opponent filtering on BallDontLie:
-     *   1. Get the opponent's game IDs via getGamesByTeam()
-     *   2. Pass those IDs here to get only the player's stats in those games
-     *
-     * URL length limit: don't pass more than ~50 game IDs at once.
-     * HeadToHeadService handles batching automatically.
-     *
-     * @param playerApiId  BallDontLie player ID
-     * @param gameIds      List of game IDs to filter by (max ~50 per call)
-     * @param cursor       Pagination cursor, or null for first page
      */
     public BdlResponseDTO<BdlStatDTO> getStatsByPlayerAndGames(Long playerApiId,
                                                                List<Long> gameIds,
@@ -166,13 +160,6 @@ public class BalldontlieService {
 
     /**
      * Fetches a single team by its BallDontLie team ID.
-     * Used to resolve the opponent's display name (e.g. "Denver Nuggets").
-     *
-     * Response JSON: { "data": { "id": 8, "full_name": "Denver Nuggets", ... } }
-     * Returns the unwrapped "data" node directly.
-     *
-     * @param teamApiId  BallDontLie team ID
-     * @return           JsonNode of the team object, or null if not found
      */
     public JsonNode getTeamById(Long teamApiId) {
         JsonNode root = client.get()
@@ -187,13 +174,6 @@ public class BalldontlieService {
     }
     /**
      * Fetches stats for a player from a given start date onward.
-     * Used by RecentStatsService — seasons[] on /stats is silently ignored by
-     * BallDontLie, but start_date is respected reliably.
-     *
-     * @param playerApiId  BallDontLie player ID
-     * @param startDate    Earliest date to include, format "YYYY-MM-DD"
-     * @param perPage      Results per page (max 100)
-     * @param cursor       Pagination cursor, or null for first page
      */
     public BdlResponseDTO<BdlStatDTO> getStatsByPlayerSince(Long playerApiId,
                                                             String startDate,
@@ -307,10 +287,11 @@ public class BalldontlieService {
 
         return new BdlResponseDTO<>(completedGames, response.meta());
     }
-    // This is get player of a specific team
 
-    public BdlResponseDTO<BdlPlayerDTO> getPlayersByTeamId(Long teamId) {
-        return client.get()
+    // This gets active players of a specific team and adds nbaPlayerId + imageUrl
+    // endpoint : http:localhost:8080/bdl/teams/1/players (1 is the team id of the external api)
+    public BdlResponseDTO<PlayerWithImageDTO> getPlayersByTeamId(Long teamId) {
+        BdlResponseDTO<BdlPlayerDTO> response = client.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/players/active")
                         .queryParam("team_ids[]", teamId)
@@ -318,6 +299,30 @@ public class BalldontlieService {
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
+        if (response == null || response.data() == null) {
+            return new BdlResponseDTO<>(List.of(), null);
+        }
+
+        List<PlayerWithImageDTO> players = response.data().stream()
+                .map(dto -> {
+                    Long nbaPlayerId = findNbaPlayerId(dto.firstName(), dto.lastName());
+                    String imageUrl = buildImageUrl(nbaPlayerId);
+
+                    return new PlayerWithImageDTO(
+                            dto.id() != null ? dto.id().longValue() : null,
+                            dto.firstName(),
+                            dto.lastName(),
+                            dto.position(),
+                            dto.height(),
+                            dto.weight(),
+                            dto.jerseyNumber(),
+                            nbaPlayerId,
+                            imageUrl
+                    );
+                })
+                .toList();
+
+        return new BdlResponseDTO<>(players, response.meta());
     }
 
     // This is to find the top perfomer of the certain season so it can be used in the player nav bar tab
@@ -342,5 +347,25 @@ public class BalldontlieService {
 
         ((ObjectNode) root).set("data", top20);
         return root;
+    }
+    private Long findNbaPlayerId(String firstName, String lastName) {
+        if (firstName == null || lastName == null) {
+            return null;
+        }
+
+        String fullName = (firstName + " " + lastName).trim();
+
+        return nbaLookupRepository
+                .findFirstByPlayerNameIgnoreCase(fullName)
+                .map(l -> l.getNbaPlayerId())
+                .orElse(null);
+    }
+
+    private String buildImageUrl(Long nbaPlayerId) {
+        if (nbaPlayerId == null) {
+            return null;
+        }
+
+        return "https://cdn.nba.com/headshots/nba/latest/1040x760/" + nbaPlayerId + ".png";
     }
 }
