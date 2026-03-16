@@ -77,7 +77,7 @@ class HeadToHeadServiceTest {
      * the filtering is done server-side (mocked) not in-memory.
      */
     private BdlStatDTO makeStat(int points, String gameDate) {
-        BdlGameDTO game = new BdlGameDTO(1, gameDate, 2024, false, null, null);
+        BdlGameDTO game = new BdlGameDTO(1, gameDate, 2024, false, null, null, null, null, null );
         BdlTeamDTO playerTeam = new BdlTeamDTO(
                 14, "LAL", "Los Angeles", "West", "Pacific", "Lakers", "Los Angeles Lakers"
         );
@@ -94,7 +94,7 @@ class HeadToHeadServiceTest {
      * the service should treat null pts as 0 and include it in analytics.
      */
     private BdlStatDTO makeStatNullPts(String gameDate) {
-        BdlGameDTO game = new BdlGameDTO(1, gameDate, 2024, false, null, null);
+        BdlGameDTO game = new BdlGameDTO(1, gameDate, 2024, false, null, null, null, null, null );
         BdlTeamDTO playerTeam = new BdlTeamDTO(
                 14, "LAL", "Los Angeles", "West", "Pacific", "Lakers", "Los Angeles Lakers"
         );
@@ -112,7 +112,7 @@ class HeadToHeadServiceTest {
     private BdlGameDTO makeDenverGame(int gameId) {
         BdlTeamDTO denver = new BdlTeamDTO(8, "DEN", "Denver", "West", "Northwest", "Nuggets", "Denver Nuggets");
         BdlTeamDTO lakers = new BdlTeamDTO(14, "LAL", "Los Angeles", "West", "Pacific", "Lakers", "Los Angeles Lakers");
-        return new BdlGameDTO(gameId, "2024-01-01", 2024, false, denver, lakers);
+        return new BdlGameDTO(gameId, "2024-01-01", 2024, false, null, null,null,  denver, lakers);
     }
 
     private BdlResponseDTO<BdlStatDTO> makeStatPage(List<BdlStatDTO> stats, Integer nextCursor) {
