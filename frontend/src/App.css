@@ -33,6 +33,7 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-top: 50px;
 }
 .games-section h2::after {
   content: '';
@@ -133,6 +134,25 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
 }
 .tab-btn.active   { background: #2a3be0; color: #fff; }
 .tab-btn.inactive { background: #1a1f2e; color: #666; }
+
+.players-grid-team{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 240px);
+  gap: 24px;
+  justify-content: center;
+  width: 100%;
+  margin-left: 200px;
+}
+.team-heading{
+  display: grid;
+  justify-content: center;
+  margin-left: 470px;
+  margin-top: 50px;
+  margin-bottom: 30px;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
 /*
 .logo {
   height: 6em;
@@ -169,3 +189,4 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
 .read-the-docs {
   color: #888;
 }
+

@@ -5,6 +5,7 @@ import com.nba.nbanonbettingapp.dto.*;
 import com.nba.nbanonbettingapp.service.BalldontlieService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PathVariable;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("/bdl")
@@ -57,5 +58,20 @@ public class BalldontlieController {
             @RequestParam(defaultValue = "2") int days
     ) {
         return service.getRecentCompletedGames(days);
+    }
+    // This is the endpoint for getting players of a team
+    //http:localhost:8080/bdl/teams/1/players (1 is the team id of the external api)
+    @GetMapping("/teams/{id}/players")
+    public BdlResponseDTO<BdlPlayerDTO> getPlayersByTeam(@PathVariable Long id) {
+        return service.getPlayersByTeamId(id);
+    }
+    // This is the endpoint for getting the top 20 season leaders for a specific stat type and season
+    //http:localhost:8080/bdl/leaders/top20?statType=pts&season=2025
+    @GetMapping("/leaders/top20")
+    public JsonNode getTop20SeasonLeaders(
+            @RequestParam String statType,
+            @RequestParam int season
+    ) {
+        return service.getTop20SeasonLeaders(statType, season);
     }
 }

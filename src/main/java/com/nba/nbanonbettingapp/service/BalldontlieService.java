@@ -1,6 +1,8 @@
 package com.nba.nbanonbettingapp.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
@@ -304,5 +306,41 @@ public class BalldontlieService {
                 .toList();
 
         return new BdlResponseDTO<>(completedGames, response.meta());
+    }
+    // This is get player of a specific team
+
+    public BdlResponseDTO<BdlPlayerDTO> getPlayersByTeamId(Long teamId) {
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/players/active")
+                        .queryParam("team_ids[]", teamId)
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    // This is to find the top perfomer of the certain season so it can be used in the player nav bar tab
+    public JsonNode getTop20SeasonLeaders(String statType, int season) {
+        JsonNode root = client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/leaders")
+                        .queryParam("season", season)
+                        .queryParam("stat_type", statType)
+                        .build())
+                .retrieve()
+                .body(JsonNode.class);
+
+        if (root == null || !root.has("data") || !root.get("data").isArray()) {
+            return root;
+        }
+
+        ArrayNode top20 = ((ArrayNode) root.get("data")).deepCopy();
+        while (top20.size() > 20) {
+            top20.remove(top20.size() - 1);
+        }
+
+        ((ObjectNode) root).set("data", top20);
+        return root;
     }
 }

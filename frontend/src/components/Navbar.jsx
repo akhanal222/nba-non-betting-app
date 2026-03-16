@@ -2,9 +2,9 @@ import { useState } from "react";
 import NbaLogo from "../assets/logo.png";
 
 // Main navigation buttons shown in the top bar
-const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
+const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
 
- function NavBar({ activePage, setActivePage, teams }) {
+ function NavBar({ activePage, setActivePage, teams, onTeamClick }) {
     // Controls whether the teams list panel is visible
   const [showTeams, setShowTeams] = useState(false);
 
@@ -29,7 +29,7 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           </div>
 
         {NAV_ITEMS.map((item) => (
-          <button key={item} className={`nav-btn${item === "DASHBOARD" ? " active" : ""}`}>
+          <button key={item} className={`nav-btn${item === "Home" ? " active" : ""}`}>
             {item}
           </button>
         ))}
@@ -40,7 +40,7 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           onClick={() => setShowTeams((prev) => !prev)}
           style={{
             background: showTeams ? "#2a3be0" : "transparent",
-            border: "1.5px solid #2a2f44",
+            border: "3px solid #a9c1c4",
             color: showTeams ? "#fff" : "#888",
             borderRadius: 8,
             padding: "5px 14px",
@@ -58,18 +58,18 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
           {showTeams ? "Hide Teams" : "All Teams"}
         </button>
       </nav>
-        {/* Home / Analysis Tabs */}
-        <div style={{ padding: "14px 0", display: "flex", gap: 10, marginTop:30, borderBottom: "1px solid #111620" }}>
-            {["Home", "Analysis"].map((tab) => (
-                <button
-                    key={tab}
-                    className={`tab-btn ${tab === activePage ? "active" : "inactive"}`}
-                    onClick={() => setActivePage(tab)}
-                >
-                    {tab}
-                </button>
-            ))}
-        </div>
+        {/*/!* Home / Analysis Tabs *!/*/}
+        {/*<div style={{ padding: "14px 0", display: "flex", gap: 10, marginTop:30, borderBottom: "1px solid #111620" }}>*/}
+        {/*    {["Home", "Analysis"].map((tab) => (*/}
+        {/*        <button*/}
+        {/*            key={tab}*/}
+        {/*            className={`tab-btn ${tab === activePage ? "active" : "inactive"}`}*/}
+        {/*            onClick={() => setActivePage(tab)}*/}
+        {/*        >*/}
+        {/*            {tab}*/}
+        {/*        </button>*/}
+        {/*    ))}*/}
+        {/*</div>*/}
 
       {/* Teams Panel */}
       {showTeams && (
@@ -89,15 +89,34 @@ const NAV_ITEMS = ["DASHBOARD", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
               margin: "0 auto"
           }}>
             {teams.map((team) => (
-              <div key={team.id} style={{
-                background: "#131720",
-                border: "1.5px solid #1e2333",
-                borderRadius: 10,
-                padding: "12px 16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-              }}>
+              <div 
+                key={team.teamId} 
+                onClick={() => {
+                  onTeamClick(team);
+                  setShowTeams(false); // Hide teams panel after selection
+                }}
+                style={{
+                  background: "#131720",
+                  border: "1.5px solid #1e2333",
+                  borderRadius: 10,
+                  padding: "12px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "#4f7cff";
+                  e.currentTarget.style.boxShadow = "0 0 12px #4f7cff44";
+                  e.currentTarget.style.background = "#1a1f2e";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "#1e2333";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "#131720";
+                }}
+              >
                   <div key={team.teamId} style= {{display: "flex", justifyContent: "center", marginBottom: 8}}>
                       <img
                           src={`https://cdn.nba.com/logos/nba/${team.nbaTeamId}/primary/L/logo.svg`}
