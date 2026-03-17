@@ -34,6 +34,19 @@ function formatGameDate(dateStr) {
     day: "numeric"
   });
 }
+function formatGameTime(status) {
+  if (!status) return "TBD";
+
+  const gameDate = new Date(status);
+  if (Number.isNaN(gameDate.getTime())) return "TBD";
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  }).format(gameDate);
+
+}
 
 export default function App() {
   const navigate = useNavigate();
@@ -118,7 +131,7 @@ export default function App() {
                         onHover={() => setHoveredGame(game.id ?? i)}
                         onLeave={() => setHoveredGame(null)}
                         onClick={() => handleGameClick(game)}
-                        badge="View Lineup"
+                        // badge="View Lineup"
                         badgeColor="#4f7cff"
                     />
                 ))}
@@ -154,7 +167,7 @@ export default function App() {
                         onHover={() => setHoveredGame(`c-${game.id ?? i}`)}
                         onLeave={() => setHoveredGame(null)}
                         onClick={() => handleGameClick(game)}
-                        badge="View Stats"
+                        // badge="View Stats"
                         badgeColor="#22c55e"
                         showScore
                     />
@@ -224,7 +237,7 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
   const visitorScore= game.visitor_team_score;
   const homeWon     = showScore && homeScore != null && visitorScore != null && homeScore > visitorScore;
   const visitorWon  = showScore && homeScore != null && visitorScore != null && visitorScore > homeScore;
-
+  const gameTime = formatGameTime(game.status);
   return (
       <div
           className="game-card"
@@ -253,6 +266,13 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
         )}
 
         <div className="game-date">{formatGameDate(game.date)}</div>
+
+        {!showScore && (
+            <>
+              <div className="game-date">{gameTime}</div>
+            </>
+        )}
+
 
         <div className="game-matchup">
           {/* Home team */}

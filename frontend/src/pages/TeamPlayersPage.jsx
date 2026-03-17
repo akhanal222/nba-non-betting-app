@@ -5,6 +5,9 @@ import AnalyzePanel from "../components/AnalyzePanel";
 import NavBar from "../components/Navbar.jsx";
 
 const API_BASE = "http://localhost:8080";
+const API = {
+    teams: "http://localhost:8080/teams",
+};
 
 export default function TeamPlayersPage() {
     const { state } = useLocation();
@@ -16,6 +19,14 @@ export default function TeamPlayersPage() {
     const [error, setError] = useState(null);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [activePage, setActivePage] = useState(null);
+    const [teams, setTeams] = useState([])
+
+    useEffect(() => {
+        fetch(API.teams)
+            .then(r => r.json())
+            .then(data => setTeams(data.data || data))
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         if (!team?.teamId) return;
@@ -55,7 +66,7 @@ export default function TeamPlayersPage() {
             <NavBar
                 activePage={activePage}
                 setActivePage={setActivePage}
-                teams={[]}
+                teams={teams}
                 onTeamClick={(team) => navigate(`/team/${team.teamId}/players`, { state: { team } })}
             />
 
