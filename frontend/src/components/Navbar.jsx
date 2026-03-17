@@ -1,5 +1,6 @@
 import { useState } from "react";
 import NbaLogo from "../assets/logo.png";
+import { useNavigate } from "react-router-dom";
 
 // Main navigation buttons shown in the top bar
 const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
@@ -7,6 +8,7 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
  function NavBar({ activePage, setActivePage, teams, onTeamClick }) {
     // Controls whether the teams list panel is visible
   const [showTeams, setShowTeams] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -28,11 +30,34 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
             />
           </div>
 
-        {NAV_ITEMS.map((item) => (
-          <button key={item} className={`nav-btn${item === "Home" ? " active" : ""}`}>
-            {item}
-          </button>
-        ))}
+          {NAV_ITEMS.map((item) => (
+              <button
+                  key={item}
+                  className={`nav-btn${item === activePage ? " active" : ""}`}
+                  onClick={() => {
+                      setActivePage(item);
+
+                      if (item === "PLAYERS") {
+                          navigate("/players");
+                          return;
+                      }
+                       if (item === "MATCHUPS"){
+                           navigate("/matchups");
+                           return;
+                       }
+                       if (item === "PREDICTIONS") {
+                           navigate("/predictions");
+                           return;
+                       }
+                      if (item === "Home") {
+                          navigate("/");
+                      }
+                  }}
+              >
+                  {item}
+              </button>
+          ))}
+
 
 {/*                Toggle button to show/hide the teams panel on the top right */}
         <button

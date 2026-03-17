@@ -35,3 +35,4 @@ frontend/dist/
 node_modules/
 dist/
 .env
+notes.txt

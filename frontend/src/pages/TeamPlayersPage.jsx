@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PlayerCard from "../components/PlayerCard";
 import AnalyzePanel from "../components/AnalyzePanel";
+import NavBar from "../components/Navbar.jsx";
 
 const API_BASE = "http://localhost:8080";
 
@@ -14,6 +15,7 @@ export default function TeamPlayersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
+    const [activePage, setActivePage] = useState(null);
 
     useEffect(() => {
         if (!team?.teamId) return;
@@ -34,6 +36,7 @@ export default function TeamPlayersPage() {
 
     if (!team) {
         return (
+
             <div className="flex flex-col items-center justify-center min-h-screen text-center">
                 <p className="text-[#555]">No team data found.</p>
                 <button
@@ -47,7 +50,14 @@ export default function TeamPlayersPage() {
     }
 
     return (
+
         <div className="min-h-screen bg-[#0a0c14] font-sans text-white">
+            <NavBar
+                activePage={activePage}
+                setActivePage={setActivePage}
+                teams={[]}
+                onTeamClick={(team) => navigate(`/team/${team.teamId}/players`, { state: { team } })}
+            />
 
             {/* ── Nav ── */}
             <nav className="flex items-center h-14 border-b border-[#111620] pl-6">
