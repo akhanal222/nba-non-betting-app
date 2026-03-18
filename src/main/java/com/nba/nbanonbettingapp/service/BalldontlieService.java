@@ -9,6 +9,7 @@ import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import com.nba.nbanonbettingapp.dto.PlayerWithImageDTO;
+import com.nba.nbanonbettingapp.entity.NbaPlayerLookup;
 import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -394,7 +395,7 @@ public class BalldontlieService {
 
         return nbaLookupRepository
                 .findFirstByPlayerNameIgnoreCase(fullName)
-                .map(l -> l.getNbaPlayerId())
+                .map(NbaPlayerLookup::getNbaPlayerId)
                 .orElse(null);
     }
 

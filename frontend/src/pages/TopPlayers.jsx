@@ -13,7 +13,6 @@ export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState("PLAYERS");
-    const [selectedPlayer, setSelectedPlayer] = useState(null);
     const navigate = useNavigate();
     const [teams, setTeams] = useState([])
 
@@ -25,7 +24,10 @@ export default function TopPlayers() {
     }, []);
 
     useEffect(() => {
+        if (teams.length === 0) return;
+
         async function loadPlayers() {
+            setLoading(true);
             try {
                 const res = await fetch(
                     `${API_BASE}/bdl/leaders/top20?statType=pts&season=${LAST_FULL_SEASON}`
@@ -36,6 +38,8 @@ export default function TopPlayers() {
 
                 const mappedPlayers = rawPlayers.map((entry, index) => {
                     const p = entry?.player ?? {};
+                    const matchedTeam =
+                        teams.find((team) => team.externalApiId === p.team_id) ?? null;
 
                     const statistic =
                         entry?.value ??
@@ -52,20 +56,20 @@ export default function TopPlayers() {
                         playerId: p.id ?? index,
                         firstName: p.first_name ?? "",
                         lastName: p.last_name ?? "",
-                        position: p.position ?? "",
-                        height: p.height ?? "",
-                        weight: p.weight ?? "",
-                        jerseyNumber: p.jersey_number ?? "",
-                        nbaPlayerId: p.id ?? null,
+                        position: p.position ?? null,
+                        height: p.height ?? null,
+                        weight: p.weight ?? null,
+                        jerseyNumber: p.jersey_number ?? null,
+                        nbaPlayerId: p.nbaPlayerId ?? null,
                         imageUrl: p.imageUrl ?? null,
-                        rank: index + 1,
+                        rank: entry?.rank ?? index + 1,
                         statistic,
                         team: {
-                            abbreviation: p.team?.abbreviation ?? "",
-                            teamName: p.team?.full_name ?? "",
-                            city: p.team?.city ?? "",
-                            conference: p.team?.conference ?? "",
-                            division: p.team?.division ?? "",
+                            abbreviation: matchedTeam?.abbreviation ?? null,
+                            teamName: matchedTeam?.teamName ?? null,
+                            city: matchedTeam?.city ?? null,
+                            conference: matchedTeam?.conference ?? null,
+                            division: matchedTeam?.division ?? null,
                         },
                     };
                 });
@@ -111,7 +115,7 @@ export default function TopPlayers() {
         }
 
         loadPlayers();
-    }, []);
+    }, [teams]);
 
     return (
         <div style={{ minHeight: "100vh", background: "#0a0c14", color: "#fff" }}>
@@ -149,18 +153,14 @@ export default function TopPlayers() {
                             <LeaderboardCard
                                 key={player.playerId}
                                 player={player}
-                                selected={selectedPlayer?.playerId === player.playerId}
                                 onClick={(p) =>
-                                    setSelectedPlayer(
-                                        selectedPlayer?.playerId === p.playerId ? null : p
-                                    )
+                                    navigate(`/players/${p.playerId}`, { state: { player: p } })
                                 }
                             />
                         ))}
                     </div>
                 )}
 
-                {selectedPlayer && <AnalyzePanel player={selectedPlayer} />}
             </div>
         </div>
     );

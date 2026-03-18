@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PlayerCard from "../components/PlayerCard";
-import AnalyzePanel from "../components/AnalyzePanel";
 import NavBar from "../components/Navbar.jsx";
 
 const API_BASE = "http://localhost:8080";
@@ -17,7 +16,6 @@ export default function TeamPlayersPage() {
     const [teamPlayers, setTeamPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [activePage, setActivePage] = useState(null);
     const [teams, setTeams] = useState([])
 
@@ -144,8 +142,10 @@ export default function TeamPlayersPage() {
                                         },
                                         isActive: player.is_active,
                                     }}
-                                    selected={selectedPlayer?.playerId === player.id}
-                                    onAnalyze={(p) => setSelectedPlayer(selectedPlayer?.playerId === player.id ? null : p)}
+                                    selected={false}
+                                    onAnalyze={(p) =>
+                                        navigate(`/players/${p.playerId}`, { state: { player: p } })
+                                    }
                                 />
                             ))}
                         </div>
@@ -153,7 +153,6 @@ export default function TeamPlayersPage() {
                         <p className="text-[#555] text-center text-[1.1rem]">No players found for this team.</p>
                     )}
 
-                    {selectedPlayer && <AnalyzePanel player={selectedPlayer} />}
                 </div>
             </main>
         </div>
