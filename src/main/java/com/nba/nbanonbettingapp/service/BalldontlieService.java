@@ -9,6 +9,7 @@ import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import com.nba.nbanonbettingapp.dto.PlayerWithImageDTO;
+import com.nba.nbanonbettingapp.entity.NbaPlayerLookup;
 import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -344,6 +345,43 @@ public class BalldontlieService {
         while (top20.size() > 20) {
             top20.remove(top20.size() - 1);
         }
+        for (JsonNode leaderNode : top20) {
+            JsonNode playerNode = leaderNode.get("player");
+            if (!(playerNode instanceof ObjectNode playerObject)) {
+                continue;
+            }
+
+            String firstName = playerNode.path("first_name").asText(null);
+            String lastName = playerNode.path("last_name").asText(null);
+
+            Long nbaPlayerId = findNbaPlayerId(firstName, lastName);
+            String imageUrl = buildImageUrl(nbaPlayerId);
+
+            if (nbaPlayerId != null) {
+                playerObject.put("nbaPlayerId", nbaPlayerId);
+            } else {
+                playerObject.putNull("nbaPlayerId");
+            }
+
+            if (imageUrl != null) {
+                playerObject.put("imageUrl", imageUrl);
+            } else {
+                playerObject.putNull("imageUrl");
+            }
+
+            if (!playerObject.path("team_id").isMissingNode() && !playerObject.path("team_id").isNull()) {
+                long teamId = playerObject.path("team_id").asLong();
+                JsonNode teamNode = getTeamById(teamId);
+
+                if (teamNode != null && !teamNode.isNull()) {
+                    playerObject.set("team", teamNode);
+                } else {
+                    playerObject.putNull("team");
+                }
+            } else {
+                playerObject.putNull("team");
+            }
+        }
 
         ((ObjectNode) root).set("data", top20);
         return root;
@@ -357,7 +395,7 @@ public class BalldontlieService {
 
         return nbaLookupRepository
                 .findFirstByPlayerNameIgnoreCase(fullName)
-                .map(l -> l.getNbaPlayerId())
+                .map(NbaPlayerLookup::getNbaPlayerId)
                 .orElse(null);
     }
 
