@@ -116,11 +116,11 @@ class HeadToHeadServiceTest {
     }
 
     private BdlResponseDTO<BdlStatDTO> makeStatPage(List<BdlStatDTO> stats, Integer nextCursor) {
-        return new BdlResponseDTO<>(stats, new BdlMetaDTO(nextCursor, 100));
+        return new BdlResponseDTO<>(stats, new BdlMetaDTO(nextCursor, 100, 1, null, stats.size()));
     }
 
     private BdlResponseDTO<BdlGameDTO> makeGamePage(List<BdlGameDTO> games, Integer nextCursor) {
-        return new BdlResponseDTO<>(games, new BdlMetaDTO(nextCursor, 100));
+        return new BdlResponseDTO<>(games, new BdlMetaDTO(nextCursor, 100, 1, null, games.size()));
     }
 
     /**

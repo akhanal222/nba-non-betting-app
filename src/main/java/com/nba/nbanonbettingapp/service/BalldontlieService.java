@@ -15,17 +15,28 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import com.nba.nbanonbettingapp.entity.Game;
+import com.nba.nbanonbettingapp.entity.Team;
+import com.nba.nbanonbettingapp.repository.GameRepository;
+import com.nba.nbanonbettingapp.repository.TeamRepository;
+import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BalldontlieService {
 
     private final RestClient client;
     private final NbaPlayerLookupRepository nbaLookupRepository;
+    private final GameRepository gameRepository;
+    private final TeamRepository teamRepository;
 
     public BalldontlieService(RestClient balldontlieRestClient,
-                              NbaPlayerLookupRepository nbaLookupRepository) {
+                              NbaPlayerLookupRepository nbaLookupRepository,GameRepository gameRepository,
+                              TeamRepository teamRepository) {
         this.client = balldontlieRestClient;
         this.nbaLookupRepository = nbaLookupRepository;
+        this.gameRepository = gameRepository;
+        this.teamRepository = teamRepository;
     }
 
     // This is for getting player Information
@@ -405,5 +416,96 @@ public class BalldontlieService {
         }
 
         return "https://cdn.nba.com/headshots/nba/latest/1040x760/" + nbaPlayerId + ".png";
+    }
+
+    //  This is to get all the games of the certain season it loop through all the pages of games each page have 100 games data
+    // It will run until there is no more page to get and return the list of games data for the season
+    public List<BdlGameDTO> getAllGamesForSeason(int season) {
+        List<BdlGameDTO> allGames = new ArrayList<>();
+        Integer cursor = null;
+
+        while (true) {
+            Integer currentCursor = cursor;
+
+            BdlResponseDTO<BdlGameDTO> response = client.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder
+                                .path("/games")
+                                .queryParam("seasons[]", season)
+                                .queryParam("per_page", 100);
+
+                        if (currentCursor != null) {
+                            builder.queryParam("cursor", currentCursor);
+                        }
+
+                        return builder.build();
+                    })
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<BdlResponseDTO<BdlGameDTO>>() {});
+
+            if (response == null || response.data() == null || response.data().isEmpty()) {
+                break;
+            }
+
+            allGames.addAll(response.data());
+
+            // This is commented this is used for debugging the error
+//            System.out.println("Batch size = " + response.data().size());
+//            System.out.println("Next cursor = " + (response.meta() != null ? response.meta().nextCursor() : null));
+//            System.out.println("Total so far = " + allGames.size());
+
+            if (response.meta() == null || response.meta().nextCursor() == null) {
+                break;
+            }
+
+            cursor = response.meta().nextCursor();
+        }
+
+        return allGames;
+    }
+    // This is to upsert the game data into our database it will check if the game already exist in the database by
+    // using the external api id if it exist it will update the game data if not it will create a new game data in the database
+    private void upsertGame(BdlGameDTO dto) {
+        if (dto.status() == null || !dto.status().equalsIgnoreCase("Final")) {
+            return;
+        }
+        if (dto.home_team_score() == null || dto.visitor_team_score() == null) {
+            return;
+        }
+        Game game = gameRepository.findByExternalApiId(dto.id().longValue())
+                .orElseGet(Game::new);
+
+        game.setExternalApiId(dto.id().longValue());
+
+        if (dto.date() != null && dto.date().length() >= 10) {
+            game.setGameDate(LocalDate.parse(dto.date().substring(0, 10)));
+        }
+
+        game.setSeasonYear(dto.season());
+        game.setHomeTeamScore(dto.home_team_score());
+        game.setAwayTeamScore(dto.visitor_team_score());
+        game.setGameStatus(dto.status());
+        game.setPostseason(dto.postseason());
+
+        Team homeTeam = teamRepository.findByExternalApiId(dto.home_team().id().longValue())
+                .orElseThrow(() -> new RuntimeException("Home team not found: " + dto.home_team().id()));
+
+        Team awayTeam = teamRepository.findByExternalApiId(dto.visitor_team().id().longValue())
+                .orElseThrow(() -> new RuntimeException("Away team not found: " + dto.visitor_team().id()));
+
+        game.setHomeTeam(homeTeam);
+        game.setAwayTeam(awayTeam);
+
+        gameRepository.save(game);
+    }
+    // Fetch all games for the given season from the API and save them to the database.
+    // Uses a transaction to ensure all games are inserted/updated safely (all-or-nothing).
+    @Transactional
+    public void importSeasonGames(int season) {
+        List<BdlGameDTO> games = getAllGamesForSeason(season);
+
+        for (BdlGameDTO dto : games) {
+            upsertGame(dto);
+        }
     }
 }
