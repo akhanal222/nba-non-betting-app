@@ -17,6 +17,90 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
   margin: 0 auto;
   padding: 0 24px;
 }
+
+.player-search-shell {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto 22px auto;
+}
+
+.player-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #111620;
+  border: 1.5px solid #1e2333;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 20;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+.player-suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1e2333;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.player-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.player-suggestion-item:hover {
+  background: #1a1f2e;
+}
+
+.player-suggestion-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.player-suggestion-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #1a1f2e;
+  border: 1px solid #2a2f44;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-suggestion-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+}
+
+.player-suggestion-avatar span {
+  position: absolute;
+  color: #4f7cff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.player-suggestion-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 /* Upcoming games styles*/
 .games-section {
   max-width: 1200px;
@@ -56,9 +140,9 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
   flex-shrink: 0;
   background: #111620;
   border: 1.5px solid #1e2333;
-  border-radius: 14px;
-  padding: 16px 20px;
-  min-width: 200px;
+  border-radius: 10px;
+  padding: 9px 10px;
+  min-width: 126px;
   transition: border-color 0.2s, transform 0.2s;
   cursor: default;
 }
@@ -67,48 +151,48 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
   transform: translateY(-2px);
 }
 .game-date {
-  font-size: 0.7rem;
+  font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #4f7cff;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 .game-matchup {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
 }
 .game-team {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   flex: 1;
 }
 .game-team img {
-  width: 52px;
-  height: 52px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 .game-team-abbr {
-  font-size: 0.8rem;
+  font-size: 0.62rem;
   font-weight: 800;
   color: #ccc;
   letter-spacing: 0.06em;
 }
 .game-vs {
-  font-size: 0.7rem;
+  font-size: 0.54rem;
   font-weight: 700;
   color: #333;
   letter-spacing: 0.1em;
 }
 .game-time {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.54rem;
   color: #444;
-  margin-top: 10px;
+  margin-top: 4px;
   letter-spacing: 0.05em;
 }
 .pill {
@@ -189,4 +273,3 @@ body { background: #0a0c14; font-family: system-ui, -apple-system, sans-serif; }
 .read-the-docs {
   color: #888;
 }
-

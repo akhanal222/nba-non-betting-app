@@ -38,7 +38,7 @@ function formatGameTime(status) {
   if (!status) return "TBD";
 
   const gameDate = new Date(status);
-  if (Number.isNaN(gameDate.getTime())) return "TBD";
+  if (Number.isNaN(gameDate.getTime())) return "Live";
 
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
@@ -48,6 +48,11 @@ function formatGameTime(status) {
 
 }
 
+function playerHeadshotUrl(nbaPlayerId) {
+  if (!nbaPlayerId) return "";
+  return `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaPlayerId}.png`;
+}
+
 export default function App() {
   const navigate = useNavigate();
 
@@ -55,6 +60,8 @@ export default function App() {
   const [teams,setTeams]= useState([]);
   const [q,setQ]= useState("");
   const [players,setPlayers]= useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingPlayers,setLoadingPlayers] = useState(false);
   const [hasSearched,setHasSearched] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -90,15 +97,50 @@ export default function App() {
         .catch(() => setLoadingCompleted(false));
   }, []);
 
+  useEffect(() => {
+    const query = q.trim();
+
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetch(API.playerSearch(query))
+          .then(r => r.json())
+          .then(data => {
+            const matches = Array.isArray(data) ? data.slice(0, 6) : [];
+            setSuggestions(matches);
+            setShowSuggestions(matches.length > 0);
+          })
+          .catch(() => {
+            setSuggestions([]);
+            setShowSuggestions(false);
+          });
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [q]);
+
   const searchPlayers = () => {
     const query = q.trim();
     if (query.length < 2) return;
     setLoadingPlayers(true);
     setHasSearched(true);
+    setShowSuggestions(false);
     fetch(API.playerSearch(query))
         .then(r => r.json())
         .then(data => { setPlayers(Array.isArray(data) ? data : []); setLoadingPlayers(false); })
         .catch(() => setLoadingPlayers(false));
+  };
+
+  const handleSuggestionSelect = (player) => {
+    setQ(`${player.firstName} ${player.lastName}`.trim());
+    setPlayers([player]);
+    setHasSearched(true);
+    setShowSuggestions(false);
+    setSuggestions([]);
   };
 
   const filteredPlayers = players;
@@ -182,28 +224,65 @@ export default function App() {
             Select Players
           </h1>
 
-          <div style={{
-            display: "flex", alignItems: "center",
-            background: "#111620", border: "1.5px solid #1e2333",
-            borderRadius: 10, padding: "0 16px",
-            maxWidth: 480, margin: "0 auto 22px auto",
-          }}>
-            <input
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && searchPlayers()}
-                placeholder="Search by player name...."
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#ccc", fontSize: "0.9rem", padding: "13px 0", fontFamily: "inherit" }}
-            />
-            <button onClick={searchPlayers}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
-                    onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
-                    onMouseLeave={e => e.currentTarget.style.color = "#555"}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
+          <div className="player-search-shell">
+            <div style={{
+              display: "flex", alignItems: "center",
+              background: "#111620", border: "1.5px solid #1e2333",
+              borderRadius: 10, padding: "0 16px",
+            }}>
+              <input
+                  value={q}
+                  onChange={e => setQ(e.target.value)}
+                  onFocus={() => setShowSuggestions(suggestions.length > 0)}
+                  onKeyDown={e => e.key === "Enter" && searchPlayers()}
+                  placeholder="Search by player name...."
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#ccc", fontSize: "0.9rem", padding: "13px 0", fontFamily: "inherit" }}
+              />
+              <button onClick={searchPlayers}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
+                      onMouseLeave={e => e.currentTarget.style.color = "#555"}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+            </div>
+
+            {showSuggestions && (
+                <div className="player-suggestions">
+                  {suggestions.map((player) => (
+                      <button
+                          key={player.playerId}
+                          className="player-suggestion-item"
+                          onMouseDown={() => handleSuggestionSelect(player)}
+                      >
+                        <div className="player-suggestion-main">
+                          <div className="player-suggestion-avatar">
+                            {player.nbaPlayerId ? (
+                                <img
+                                    src={playerHeadshotUrl(player.nbaPlayerId)}
+                                    alt={`${player.firstName} ${player.lastName}`}
+                                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                />
+                            ) : null}
+                            <span>
+                              {player.firstName?.[0] ?? ""}{player.lastName?.[0] ?? ""}
+                            </span>
+                          </div>
+                          <div className="player-suggestion-copy">
+                            <span style={{ color: "#fff", fontWeight: 600 }}>
+                              {player.firstName} {player.lastName}
+                            </span>
+                            <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                              {player.team?.abbreviation ?? "—"} • {player.position ?? "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                  ))}
+                </div>
+            )}
           </div>
 
           {loadingPlayers ? (
