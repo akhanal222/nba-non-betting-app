@@ -9,6 +9,7 @@ import TopPlayers from './pages/TopPlayers.jsx'
 import MatchupsDashboard from "./pages/MatchupsDashboard.jsx";
 import PlayersPredictions from "./pages/PlayersPredictions.jsx"
 import PlayerDetailPage from './pages/PlayerDetailPage.jsx'
+import TeamStanding from'./pages/TeamsStanding.jsx'
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
@@ -21,6 +22,8 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/matchups" element={<MatchupsDashboard/>} />
                 <Route path= "/predictions" element={<PlayersPredictions/>} />
                 <Route path="/players/:playerId" element={<PlayerDetailPage />} />
+                <Route path="/team/standing" element={<TeamStanding />} />
+
             </Routes>
         </BrowserRouter>
     </StrictMode>,
