@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/Navbar.jsx";
-import AnalyzePanel from "../components/Analyzepanel.jsx";
 
 const API_BASE = "http://localhost:8080";
 const API = {
@@ -30,6 +29,7 @@ export default function TopPlayers() {
 
     useEffect(() => {
         if (teams.length === 0) return;
+        let cancelled = false;
 
         async function loadPlayers() {
             setLoading(true);
@@ -59,6 +59,7 @@ export default function TopPlayers() {
 
                     return {
                         playerId: p.id ?? index,
+                        externalApiId: p.id ?? null,
                         firstName: p.first_name ?? "",
                         lastName: p.last_name ?? "",
                         position: p.position ?? null,
@@ -69,6 +70,7 @@ export default function TopPlayers() {
                         imageUrl: p.imageUrl ?? null,
                         rank: entry?.rank ?? index + 1,
                         statistic,
+                        avgLast5: "—",
                         team: {
                             abbreviation: matchedTeam?.abbreviation ?? null,
                             teamName: matchedTeam?.teamName ?? null,
@@ -79,11 +81,17 @@ export default function TopPlayers() {
                     };
                 });
 
+                if (!cancelled) {
+                    setPlayers(mappedPlayers);
+                    setTopPlayers(mappedPlayers);
+                    setLoading(false);
+                }
+
                 const playersWithLast5 = await Promise.all(
                     mappedPlayers.map(async (player) => {
                         try {
                             const statsRes = await fetch(
-                                `${API_BASE}/stats/player/external/${player.playerId}?limit=5`
+                                `${API_BASE}/stats/player/external/${player.externalApiId}?limit=5`
                             );
                             const statsData = await statsRes.json();
                             const games = Array.isArray(statsData) ? statsData : [];
@@ -110,18 +118,26 @@ export default function TopPlayers() {
                     })
                 );
 
-                setPlayers(playersWithLast5);
-                setTopPlayers(playersWithLast5);
+                if (!cancelled) {
+                    setPlayers((current) =>
+                        current.length === mappedPlayers.length ? playersWithLast5 : current
+                    );
+                    setTopPlayers(playersWithLast5);
+                }
             } catch (error) {
                 console.error("Failed to load top players:", error);
-                setPlayers([]);
-                setTopPlayers([]);
-            } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setPlayers([]);
+                    setTopPlayers([]);
+                    setLoading(false);
+                }
             }
         }
 
         loadPlayers();
+        return () => {
+            cancelled = true;
+        };
     }, [teams]);
 
     useEffect(() => {
@@ -166,6 +182,7 @@ export default function TopPlayers() {
             const data = await res.json();
             const mappedPlayers = (Array.isArray(data) ? data : []).map((player) => ({
                 playerId: player.playerId,
+                externalApiId: player.externalApiId ?? player.playerId ?? null,
                 firstName: player.firstName ?? "",
                 lastName: player.lastName ?? "",
                 position: player.position ?? null,
@@ -201,6 +218,7 @@ export default function TopPlayers() {
         setQ(`${player.firstName} ${player.lastName}`.trim());
         setPlayers([{
             playerId: player.playerId,
+            externalApiId: player.externalApiId ?? player.playerId ?? null,
             firstName: player.firstName ?? "",
             lastName: player.lastName ?? "",
             position: player.position ?? null,
@@ -359,6 +377,7 @@ function LeaderboardCard({ player, onClick, selected }) {
                 display: "flex",
                 flexDirection: "column",
                 gap: 12,
+                height: "100%",
                 boxShadow: selected ? "0 0 18px #4f7cff44" : "none",
             }}
         >
@@ -403,7 +422,7 @@ function LeaderboardCard({ player, onClick, selected }) {
                     />
                 )}
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                     <div style={{ color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}>
                         {player.firstName} {player.lastName}
                     </div>
@@ -421,9 +440,9 @@ function LeaderboardCard({ player, onClick, selected }) {
                     marginTop: 10,
                 }}
             >
-                <Stat value={player.statistic} label="Statistic" />
-                <Stat value={player.avgLast5} label="Last 5 Game Average" />
-                <Stat value={player.rank} label="Ranking last season" />
+                <Stat value={player.statistic} label="Last season AVG" />
+                <Stat value={player.avgLast5} label="5 Game AVG" />
+                <Stat value={player.rank} label="Last season Rank" />
             </div>
 
             <button
@@ -439,7 +458,7 @@ function LeaderboardCard({ player, onClick, selected }) {
                     fontWeight: 600,
                     cursor: "pointer",
                     width: "100%",
-                    marginTop: 10,
+                    marginTop: "auto",
                 }}
             >
                 Detail

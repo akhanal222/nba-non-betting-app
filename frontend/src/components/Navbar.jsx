@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import NbaLogo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +9,16 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
     // Controls whether the teams list panel is visible
   const [showTeams, setShowTeams] = useState(false);
   const navigate = useNavigate();
+  const visibleTeams = useMemo(() => {
+    const teamList = Array.isArray(teams) ? teams : [];
+
+    return teamList
+      .filter((team) => {
+        const id = Number(team?.externalApiId ?? team?.teamId);
+        return Number.isInteger(id) && id >= 1 && id <= 30;
+      })
+      .sort((a, b) => Number(a?.externalApiId ?? a?.teamId) - Number(b?.externalApiId ?? b?.teamId));
+  }, [teams]);
 
   return (
     <>
@@ -27,6 +37,9 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
               src={NbaLogo}
               alt="NBA Logo"
               style={{ height: 100, width: "auto" }}
+              onClick={() =>{
+                  navigate("/")
+              }}
             />
           </div>
 
@@ -118,7 +131,7 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
               maxWidth: 1000,
               margin: "0 auto"
           }}>
-            {teams.map((team) => (
+            {visibleTeams.map((team) => (
               <div 
                 key={team.teamId} 
                 onClick={() => {

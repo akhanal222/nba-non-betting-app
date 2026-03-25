@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import PlayerCard from "./components/PlayerCard";
-import AnalyzePanel from "./components/AnalyzePanel";
 
 const API = {
   test:           "http://localhost:8080/test",
@@ -64,7 +63,6 @@ export default function App() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingPlayers,setLoadingPlayers] = useState(false);
   const [hasSearched,setHasSearched] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const [upcomingGames,setUpcomingGames]= useState([]);
   const [loadingUpcoming,setLoadingUpcoming]= useState(false);
@@ -302,16 +300,14 @@ export default function App() {
                     <PlayerCard
                         key={player.playerId}
                         player={player}
-                        selected={selectedPlayer?.playerId === player.playerId}
-                        onAnalyze={p => setSelectedPlayer(selectedPlayer?.playerId === p.playerId ? null : p)}
+                        selected={false}
+                        onAnalyze={(p) => navigate(`/players/${p.playerId}`, { state: { player: p } })}
                     />
                 ))}
               </div>
           ) : hasSearched ? (
               <p style={{ color: "#444", textAlign: "center" }}>No players found.</p>
           ) : null}
-
-          {selectedPlayer && <AnalyzePanel player={selectedPlayer} />}
         </main>
       </div>
   );
