@@ -429,7 +429,7 @@ export default function MatchupsDashboard() {
                             step="0.5"
                             value={statLine}
                             onChange={(e) => {
-                                setStatLine(parseFloat(e.target.value) || 0);
+                                setStatLine(parseFloat(e.target.value) || "");
                                 resetResults();
                             }}
                             className="controls-line-input"

@@ -2,10 +2,25 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../Playerdetailpage.css";
 import NavBar from "../components/Navbar.jsx";
+import { Bar, Line } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend,
+} from "chart.js";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
 const API = {
     playerStats: (id, limit) =>
         `http://localhost:8080/stats/player/external/${id}?limit=${limit}`,
+    recentAnalyze: (params) =>
+        `http://localhost:8080/stats/recent/analyze?${new URLSearchParams(params)}`,
     teams: "http://localhost:8080/teams",
 };
 
@@ -16,6 +31,107 @@ function headshot(id) {
 function logo(nbaTeamId) {
     return `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg`;
 }
+
+function buildRecentGamesChart(rawStats, statLine) {
+    const stats = [...rawStats].reverse();
+
+    return {
+        labels: stats.map((stat) => {
+            const gameDate = stat?.game?.gameDate;
+            return gameDate
+                ? new Date(gameDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                : "—";
+        }),
+        datasets: [
+            {
+                label: "PTS",
+                data: stats.map((stat) => stat.pointsScored ?? 0),
+                borderColor: "#4f7cff",
+                backgroundColor: "rgba(79,124,255,0.18)",
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 4,
+            },
+            {
+                label: "REB",
+                data: stats.map((stat) => stat.totalRebounds ?? 0),
+                borderColor: "#47e897",
+                backgroundColor: "rgba(71,232,151,0.16)",
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 4,
+            },
+            {
+                label: "AST",
+                data: stats.map((stat) => stat.assists ?? 0),
+                borderColor: "#e8c547",
+                backgroundColor: "rgba(232,197,71,0.16)",
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 4,
+            },
+            {
+                label: "Stat Line",
+                type: "line",
+                data: stats.map(() => statLine),
+                borderColor: "#ff6b6b",
+                backgroundColor: "rgba(255,107,107,0.12)",
+                borderWidth: 2,
+                borderDash: [6, 6],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                tension: 0,
+                fill: false,
+                order: 0,
+            },
+        ],
+    };
+}
+
+const recentGamesChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: "#cfd7e6",
+                boxWidth: 10,
+                boxHeight: 10,
+            },
+        },
+        tooltip: {
+            mode: "index",
+            intersect: false,
+        },
+    },
+    interaction: {
+        mode: "index",
+        intersect: false,
+    },
+    scales: {
+        x: {
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#8bb5b4",
+            },
+        },
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#8bb5b4",
+                precision: 0,
+            },
+        },
+    },
+};
 
 // ── Raw Game Row ──────────────────────────────────────────────────────────────
 function RawGameRow({ stat, index }) {
@@ -81,6 +197,10 @@ export default function PlayerDetailPage() {
     const [teams, setTeams] = useState([]);
     const [rawStats, setRawStats] = useState([]);
     const [rawLoading, setRawLoading] = useState(false);
+    const [analysisData, setAnalysisData] = useState(null);
+    const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [statLine, setStatLine] = useState(15.5);
+    const [chartType, setChartType] = useState("line");
     const [imgErr, setImgErr] = useState(false);
 
     useEffect(() => {
@@ -102,6 +222,23 @@ export default function PlayerDetailPage() {
             .catch(() => setRawStats([]))
             .finally(() => setRawLoading(false));
     }, [player]);
+
+    useEffect(() => {
+        if (!player?.externalApiId) return;
+        setAnalysisLoading(true);
+        fetch(API.recentAnalyze({
+            playerApiId: player.externalApiId,
+            statLine,
+            limit: 5,
+            statType: "pts",
+        }))
+            .then((r) => r.json())
+            .then((data) => setAnalysisData(data))
+            .catch(() => setAnalysisData(null))
+            .finally(() => setAnalysisLoading(false));
+    }, [player, statLine]);
+
+    const recentGamesChartData = buildRecentGamesChart(rawStats, statLine);
 
     if (!player) {
         return (
@@ -194,6 +331,85 @@ export default function PlayerDetailPage() {
                                 <p className={`text-base font-semibold ${item.color ?? "text-white"}`}>{item.v}</p>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8">
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                        <p className="text-[white] text-xs font-semibold uppercase tracking-widest">Recent Games Chart</p>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[#8bb5b4] text-[10px] font-semibold uppercase tracking-wider">Stat Line</span>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    value={statLine}
+                                    onChange={(e) => setStatLine(parseFloat(e.target.value) || " ")}
+                                    className="player-detail-line-input"
+                                />
+                            </div>
+                            <button
+                                onClick={() => setChartType("line")}
+                                className="px-3 py-1.5 text-xs font-semibold border border-[#1a2540] transition-colors"
+                                style={{
+                                    background: chartType === "line" ? "#4f7cff" : "transparent",
+                                    color: chartType === "line" ? "#fff" : "#8bb5b4",
+                                }}
+                            >
+                                Line
+                            </button>
+                            <button
+                                onClick={() => setChartType("bar")}
+                                className="px-3 py-1.5 text-xs font-semibold border border-[#1a2540] transition-colors"
+                                style={{
+                                    background: chartType === "bar" ? "#4f7cff" : "transparent",
+                                    color: chartType === "bar" ? "#fff" : "#8bb5b4",
+                                }}
+                            >
+                                Bar
+                            </button>
+                        </div>
+                    </div>
+                    {analysisLoading ? (
+                        <div className="flex items-center justify-center py-10 mt-2 border-b border-[#111825] mb-6">
+                            <div className="w-6 h-6 border-2 border-[#4f7cff] border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : analysisData && (
+                        <div className="grid grid-cols-4 gap-4 mt-3 mb-6 pb-6 border-b border-[#111825]">
+                            <div className="py-2">
+                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Avg PTS</p>
+                                <p className="text-base font-semibold text-white">{analysisData.average ?? "—"}</p>
+                            </div>
+                            <div className="py-2">
+                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Hit Rate</p>
+                                <p className="text-base font-semibold text-white">
+                                    {typeof analysisData.hitRate === "number" ? `${Math.round(analysisData.hitRate * 100)}%` : "—"}
+                                </p>
+                            </div>
+                            <div className="py-2">
+                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Hit Count</p>
+                                <p className="text-base font-semibold text-white">
+                                    {analysisData.hitCount ?? "—"}/{analysisData.totalGames ?? "—"}
+                                </p>
+                            </div>
+                            <div className="py-2">
+                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Std Dev</p>
+                                <p className="text-base font-semibold text-white">{analysisData.standardDeviation ?? "—"}</p>
+                            </div>
+                        </div>
+                    )}
+                    <div style={{ height: 320 }}>
+                        {rawLoading ? (
+                            <div className="flex items-center justify-center h-full">
+                                <div className="w-6 h-6 border-2 border-[#4f7cff] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : rawStats.length === 0 ? (
+                            <p className="text-[#2a3a5a] text-sm text-center py-10">No chart data available</p>
+                        ) : (
+                            chartType === "bar"
+                                ? <Bar data={recentGamesChartData} options={recentGamesChartOptions} />
+                                : <Line data={recentGamesChartData} options={recentGamesChartOptions} />
+                        )}
                     </div>
                 </div>
 

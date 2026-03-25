@@ -30,3 +30,19 @@
     max-width: 1400px;
     margin: 0 auto;
 }
+
+.player-detail-line-input {
+    width: 88px;
+    padding: 8px 10px;
+    border: 1px solid #1a2540;
+    background: #060810;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+}
+
+.player-detail-line-input:focus {
+    border-color: #4f7cff;
+}
