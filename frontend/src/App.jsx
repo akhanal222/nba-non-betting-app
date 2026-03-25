@@ -79,7 +79,16 @@ export default function App() {
 
     fetch(API.teams)
         .then(r => r.json())
-        .then(data => setTeams(data.data || data))
+        .then(data => {
+          const filteredTeams = (Array.isArray(data.data || data) ? (data.data || data) : [])
+              .filter((team) => {
+                const id = Number(team?.externalApiId ?? team?.teamId);
+                return Number.isInteger(id) && id >= 1 && id <= 30;
+              })
+              .sort((a, b) => Number(a?.externalApiId ?? a?.teamId) - Number(b?.externalApiId ?? b?.teamId));
+
+          setTeams(filteredTeams);
+        })
         .catch(() => {});
 
     // Upcoming

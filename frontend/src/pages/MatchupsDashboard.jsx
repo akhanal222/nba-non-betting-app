@@ -17,6 +17,12 @@ const STAT_TYPES = [
     { key: "reb", label: "REB", color: "#47e897", glow: "rgba(71,232,151,0.15)" },
     { key: "ast", label: "AST", color: "#479de8", glow: "rgba(71,157,232,0.15)" },
     { key: "blk", label: "BLK", color: "#e86347", glow: "rgba(232,99,71,0.15)" },
+    { key: "stl", label: "STL", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
+    { key: "turnover", label: "TOVR", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
+    { key: "fg3m", label: "3PT", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
+
+
+
 ];
 
 function playerHeadshot(id) {
@@ -151,7 +157,7 @@ function TeamSearch({ teams, team, onSelect, onClear, disabledAbbr }) {
 
     return (
         <div ref={ref} className="search-wrapper">
-            <label className="search-label search-label--team">Opponent</label>
+            <label className="search-label search-label--team">Opponent Team </label>
             <div className="search-field-wrap">
                 {team ? (
                     <div className="search-selected">
@@ -264,7 +270,19 @@ export default function MatchupsDashboard() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(API.teams).then(r => r.json()).then(d => setTeams(d.data || d)).catch(() => {});
+        fetch(API.teams)
+            .then(r => r.json())
+            .then(data => {
+                const filteredTeams = (Array.isArray(data.data || data) ? (data.data || data) : [])
+                    .filter((team) => {
+                        const id = Number(team?.externalApiId ?? team?.teamId);
+                        return Number.isInteger(id) && id >= 1 && id <= 30;
+                    })
+                    .sort((a, b) => Number(a?.externalApiId ?? a?.teamId) - Number(b?.externalApiId ?? b?.teamId));
+
+                setTeams(filteredTeams);
+            })
+            .catch(() => {});
     }, []);
 
     const resetResults = () => { setResults(null); setError(null); };
