@@ -3,7 +3,7 @@ import NbaLogo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 // Main navigation buttons shown in the top bar
-const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
+const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
 
  function NavBar({ activePage, setActivePage, teams, onTeamClick }) {
     // Controls whether the teams list panel is visible
@@ -49,9 +49,14 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS"];
                            navigate("/predictions");
                            return;
                        }
+                      if (item === "STANDING") {
+                          navigate("/team/standing");
+                          return;
+                      }
                       if (item === "Home") {
                           navigate("/");
                       }
+
                   }}
               >
                   {item}
