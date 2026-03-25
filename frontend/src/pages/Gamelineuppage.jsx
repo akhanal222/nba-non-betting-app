@@ -209,7 +209,7 @@ function StatsOnlyCol({ teamName, abbr, stats, flip }) {
         <div style={{ flex: 1, minWidth: 0 }}>
             <ColHeader abbr={abbr} teamName={teamName} flip={flip} />
             {stats.length === 0 ? (
-                <p style={{ color: "#333", fontSize: "0.8rem", padding: "0 12px" }}>No stats available.</p>
+                <p style={{ color: "#bdbdbd", fontSize: "0.8rem", padding: "0 12px" }}>No stats available.</p>
             ) : (
                 <>
                     <GroupLabel flip={flip}>Players</GroupLabel>
@@ -244,7 +244,7 @@ function PlayerStatRow({ entry, stat, flip }) {
     const p = entry?.player;
     if (!p) return null;
 
-    const img = p.id ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${p.id}.png` : null;
+    const img = p.nbaPlayerId ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${p.id}.png` : null;
 
     const statCols = [
         { label: "PTS", value: stat?.pts },
@@ -257,8 +257,8 @@ function PlayerStatRow({ entry, stat, flip }) {
 
     return (
         <div
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            // onMouseEnter={() => setHovered(true)}
+            // onMouseLeave={() => setHovered(false)}
             style={{
                 padding: "10px 12px", borderRadius: 10, marginBottom: 3,
                 background: hovered ? "#111620" : "transparent",
@@ -321,7 +321,7 @@ function PlayerStatRow({ entry, stat, flip }) {
                             <div style={{ fontSize: "0.78rem", fontWeight: 900, color: value > 0 ? "#fff" : "#333" }}>
                                 {value ?? "—"}
                             </div>
-                            <div style={{ fontSize: "0.56rem", color: "#444", letterSpacing: "0.08em", marginTop: 1 }}>
+                            <div style={{ fontSize: "0.56rem", color: "white", letterSpacing: "0.08em", marginTop: 1 }}>
                                 {label}
                             </div>
                         </div>

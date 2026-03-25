@@ -6,15 +6,20 @@ import AnalyzePanel from "../components/Analyzepanel.jsx";
 const API_BASE = "http://localhost:8080";
 const API = {
     teams: "http://localhost:8080/teams",
+    playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
 };
 const LAST_FULL_SEASON = 2025;
 
 export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
+    const [topPlayers, setTopPlayers] = useState([]);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState("PLAYERS");
     const navigate = useNavigate();
     const [teams, setTeams] = useState([])
+    const [q, setQ] = useState("");
 
     useEffect(() => {
         fetch(API.teams)
@@ -106,9 +111,11 @@ export default function TopPlayers() {
                 );
 
                 setPlayers(playersWithLast5);
+                setTopPlayers(playersWithLast5);
             } catch (error) {
                 console.error("Failed to load top players:", error);
                 setPlayers([]);
+                setTopPlayers([]);
             } finally {
                 setLoading(false);
             }
@@ -116,6 +123,108 @@ export default function TopPlayers() {
 
         loadPlayers();
     }, [teams]);
+
+    useEffect(() => {
+        const query = q.trim();
+
+        if (query.length < 2) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            fetch(API.playerSearch(query))
+                .then((r) => r.json())
+                .then((data) => {
+                    const matches = Array.isArray(data) ? data.slice(0, 6) : [];
+                    setSuggestions(matches);
+                    setShowSuggestions(matches.length > 0);
+                })
+                .catch(() => {
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                });
+        }, 250);
+
+        return () => clearTimeout(timeoutId);
+    }, [q]);
+
+    const searchPlayers = async () => {
+        const query = q.trim();
+
+        if (query.length < 2) {
+            setPlayers(topPlayers);
+            setShowSuggestions(false);
+            return;
+        }
+
+        setLoading(true);
+        setShowSuggestions(false);
+        try {
+            const res = await fetch(API.playerSearch(query));
+            const data = await res.json();
+            const mappedPlayers = (Array.isArray(data) ? data : []).map((player) => ({
+                playerId: player.playerId,
+                firstName: player.firstName ?? "",
+                lastName: player.lastName ?? "",
+                position: player.position ?? null,
+                height: player.height ?? null,
+                weight: player.weight ?? null,
+                jerseyNumber: player.jerseyNumber ?? null,
+                nbaPlayerId: player.nbaPlayerId ?? null,
+                imageUrl: player.nbaPlayerId
+                    ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`
+                    : null,
+                rank: "—",
+                statistic: "—",
+                avgLast5: "—",
+                team: {
+                    abbreviation: player.team?.abbreviation ?? null,
+                    teamName: player.team?.teamName ?? null,
+                    city: player.team?.city ?? null,
+                    conference: player.team?.conference ?? null,
+                    division: player.team?.division ?? null,
+                },
+            }));
+
+            setPlayers(mappedPlayers);
+        } catch (error) {
+            console.error("Failed to search players:", error);
+            setPlayers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSuggestionSelect = (player) => {
+        setQ(`${player.firstName} ${player.lastName}`.trim());
+        setPlayers([{
+            playerId: player.playerId,
+            firstName: player.firstName ?? "",
+            lastName: player.lastName ?? "",
+            position: player.position ?? null,
+            height: player.height ?? null,
+            weight: player.weight ?? null,
+            jerseyNumber: player.jerseyNumber ?? null,
+            nbaPlayerId: player.nbaPlayerId ?? null,
+            imageUrl: player.nbaPlayerId
+                ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`
+                : null,
+            rank: "—",
+            statistic: "—",
+            avgLast5: "—",
+            team: {
+                abbreviation: player.team?.abbreviation ?? null,
+                teamName: player.team?.teamName ?? null,
+                city: player.team?.city ?? null,
+                conference: player.team?.conference ?? null,
+                division: player.team?.division ?? null,
+            },
+        }]);
+        setShowSuggestions(false);
+        setSuggestions([]);
+    };
 
     return (
         <div style={{ minHeight: "100vh", background: "#0a0c14", color: "#fff" }}>
@@ -141,6 +250,79 @@ export default function TopPlayers() {
                 }}
                 >Top 20 players Last Season </h1>
 
+                <div className="player-search-shell">
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: "#111620",
+                        border: "1.5px solid #1e2333",
+                        borderRadius: 10,
+                        padding: "0 16px",
+                    }}>
+                        <input
+                            value={q}
+                            onChange={e => setQ(e.target.value)}
+                            onFocus={() => setShowSuggestions(suggestions.length > 0)}
+                            onKeyDown={e => e.key === "Enter" && searchPlayers()}
+                            placeholder="Search by player name..."
+                            style={{
+                                flex: 1,
+                                background: "transparent",
+                                border: "none",
+                                outline: "none",
+                                color: "#ccc",
+                                fontSize: "0.9rem",
+                                padding: "13px 0",
+                                fontFamily: "inherit"
+                            }}
+                        />
+                        <button
+                            onClick={searchPlayers}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
+                            onMouseLeave={e => e.currentTarget.style.color = "#555"}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {showSuggestions && (
+                        <div className="player-suggestions">
+                            {suggestions.map((player) => (
+                                <button
+                                    key={player.playerId}
+                                    className="player-suggestion-item"
+                                    onMouseDown={() => handleSuggestionSelect(player)}
+                                >
+                                    <div className="player-suggestion-main">
+                                        <div className="player-suggestion-avatar">
+                                            {player.nbaPlayerId ? (
+                                                <img
+                                                    src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`}
+                                                    alt={`${player.firstName} ${player.lastName}`}
+                                                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                                />
+                                            ) : null}
+                                            <span>
+                                                {player.firstName?.[0] ?? ""}{player.lastName?.[0] ?? ""}
+                                            </span>
+                                        </div>
+                                        <div className="player-suggestion-copy">
+                                            <span style={{ color: "#fff", fontWeight: 600 }}>
+                                                {player.firstName} {player.lastName}
+                                            </span>
+                                            <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                                                {player.team?.abbreviation ?? "—"} • {player.position ?? "—"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
 
                 {loading ? (
