@@ -426,8 +426,8 @@ body {
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid #14171f;
-    color: #2a3045;
+    border: 1px solid #95a3c7;
+    color: #9095b3;
     background: transparent;
 }
 
@@ -439,11 +439,11 @@ body {
 }
 
 .controls-games-label {
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #2a3045;
+    color:#9095b3 ;
     white-space: nowrap;
 }
 
@@ -458,8 +458,8 @@ body {
     border-radius: 10px;
     font-size: 13px;
     font-weight: 700;
-    border: 1px solid #14171f;
-    color: #2a3045;
+    border: 1px solid #95a3c7;
+    color: #9095b3;
     background: transparent;
     cursor: pointer;
     transition: all 0.2s;
@@ -479,8 +479,8 @@ body {
     font-size: 11px;
     font-weight: 700;
     font-family: inherit;
-    border: 1px solid #14171f;
-    color: #2a3045;
+    border: 1px solid #95a3c7;
+    color: #cc5555;
     background: transparent;
     cursor: pointer;
     transition: all 0.2s;
@@ -500,11 +500,11 @@ body {
 }
 
 .controls-line-label {
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #2a3045;
+    color: #9095b3;
     white-space: nowrap;
 }
 
@@ -512,7 +512,7 @@ body {
     width: 88px;
     padding: 10px 12px;
     border-radius: 10px;
-    border: 1px solid #14171f;
+    border: 1px solid #9095b3;
     background: #0e1018;
     color: #e0e0e0;
     font-size: 13px;
@@ -548,8 +548,10 @@ body {
 
 .controls-analyze-btn--disabled {
     background: #0e1018;
-    color: #1e2535;
+    color: #95a3c7;
     cursor: not-allowed;
+    border: 2px solid #b1b18c;
+
 }
 
 .controls-analyze-spinner {
@@ -561,7 +563,7 @@ body {
 .controls-analyze-spinner__ring {
     width: 12px;
     height: 12px;
-    border: 2px solid #0b0d11;
+    border: 2px solid #e8c547;
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
