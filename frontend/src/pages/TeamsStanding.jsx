@@ -62,7 +62,6 @@ const Toast = ({ message, type, onDismiss }) => {
             background: bg, border: `1px solid ${border}33`,
             borderRadius: 10, padding: "12px 20px",
             display: "flex", alignItems: "center", gap: 10,
-            backdropFilter: "blur(12px)",
             animation: "slideIn 0.3s ease-out",
             color: "#e6edf3", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
         }}>
@@ -192,7 +191,7 @@ export default function NBAStandings() {
     return (
         <div style={{
             minHeight: "100vh",
-            background: "linear-gradient(145deg, #0d1117 0%, #161b22 50%, #0d1117 100%)",
+            background: "#0a0c14",
             color: "#e6edf3",
             fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
         }}>
@@ -232,10 +231,9 @@ export default function NBAStandings() {
                                 padding: "8px 20px", borderRadius: 8, border: "none",
                                 fontSize: 13, fontWeight: 600, cursor: "pointer",
                                 fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.04em",
-                                background: conf === c ? "linear-gradient(135deg, #4f7cff, #3d5ce8)" : "rgba(255,255,255,0.05)",
+                                background: conf === c ? "#3d5ce8" : "rgba(255,255,255,0.05)",
                                 color: conf === c ? "#fff" : "#8b949e",
                                 transition: "all 0.2s",
-                                boxShadow: conf === c ? "0 2px 12px rgba(79,124,255,0.25)" : "none",
                             }}>
                                 {c === "All" ? "ALL TEAMS" : c.toUpperCase() + "ERN"}
                             </button>
@@ -246,11 +244,9 @@ export default function NBAStandings() {
                 {/* Table */}
                 <div style={{
                     maxWidth: 1100, margin: "0 auto",
-                    background: "rgba(22,27,34,0.8)",
+                    background: "#212536",
                     border: "1px solid rgba(255,255,255,0.06)",
                     borderRadius: 16, overflow: "hidden",
-                    backdropFilter: "blur(20px)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
                 }}>
                     {/* Table Header */}
                     <div style={{
@@ -262,7 +258,7 @@ export default function NBAStandings() {
                             <div key={col.key} style={{
                                 width: col.w || undefined, flex: col.w ? undefined : 1,
                                 fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
-                                color: "#555c68",
+                                color: "white",
                                 fontFamily: "'JetBrains Mono', monospace",
                                 textAlign: col.key === "team" ? "left" : "center",
                                 userSelect: "none",
