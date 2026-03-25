@@ -228,7 +228,7 @@ export default function App() {
         {/* ── Player Search ── */}
         <main style={{ padding: "40px 0", textAlign: "left" }}>
           <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: "#fff", marginBottom: 22, textAlign: "center"}}>
-            Select Players
+            Search Players
           </h1>
 
           <div className="player-search-shell">

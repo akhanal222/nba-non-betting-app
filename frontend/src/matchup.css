@@ -74,6 +74,15 @@ body {
     padding: 48px 24px;
 }
 
+.matchups-page-loader {
+    position: relative;
+    z-index: 1;
+    width: 80vw;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 24px;
+}
+
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .matchups-header {
     text-align: center;
@@ -484,6 +493,39 @@ body {
     border-color: #47e89740;
 }
 
+.controls-line-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.controls-line-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #2a3045;
+    white-space: nowrap;
+}
+
+.controls-line-input {
+    width: 88px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #14171f;
+    background: #0e1018;
+    color: #e0e0e0;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: center;
+    outline: none;
+}
+
+.controls-line-input:focus {
+    border-color: #479de840;
+}
+
 /* Analyze button */
 .controls-analyze-btn {
     padding: 10px 32px;
@@ -857,10 +899,10 @@ body {
 
 .result-row__indicator--hit {
     background: #47e897;
-    box-shadow: 0 0 12px rgba(71,232,151,0.3);
+    /* box-shadow: 0 0 12px rgba(71,232,151,0.3); */
 }
 
 .result-row__indicator--miss {
     background: #e86347;
-    box-shadow: 0 0 12px rgba(232,99,71,0.3);
+    /* box-shadow: 0 0 12px rgba(232,99,71,0.3); */
 }

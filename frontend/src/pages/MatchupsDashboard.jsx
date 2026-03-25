@@ -25,6 +25,16 @@ const STAT_TYPES = [
 
 ];
 
+const DEFAULT_STAT_LINES = {
+    pts: 15.5,
+    reb: 5.5,
+    ast: 4.5,
+    blk: 0.5,
+    stl: 0.5,
+    turnover: 2.5,
+    fg3m: 1.5,
+};
+
 function playerHeadshot(id) {
     return id
         ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
@@ -223,8 +233,7 @@ function ResultRow({ result, statType, statLine, index, total }) {
     const pct = total > 0 ? (result.statValue ?? 0) / (statLine * 2) : 0;
 
     return (
-        <div className={`result-row fade-up ${hit ? "result-row--hit" : "result-row--miss"}`}
-             style={{ animationDelay: `${index * 0.04}s` }}>
+        <div className={`result-row ${hit ? "result-row--hit" : "result-row--miss"}`}>
       <span className="result-row__index">
         {String(index + 1).padStart(2, "0")}
       </span>
@@ -256,13 +265,14 @@ function ResultRow({ result, statType, statLine, index, total }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MatchupsDashboard() {
     const [teams, setTeams] = useState([]);
+    const [pageLoading, setPageLoading] = useState(true);
     const [activePage, setActivePage] = useState("MATCHUPS");
     const navigate = useNavigate();
 
     const [playerA, setPlayerA] = useState(null);
     const [opponentTeam, setOpponentTeam] = useState(null);
     const [statType, setStatType] = useState("pts");
-    const DEFAULT_STAT_LINE = 15.5;
+    const [statLine, setStatLine] = useState(DEFAULT_STAT_LINES.pts);
     const [limit, setLimit] = useState(5);
     const [includePlayoffs, setIncludePlayoffs] = useState(false);
     const [results, setResults] = useState(null);
@@ -282,10 +292,16 @@ export default function MatchupsDashboard() {
 
                 setTeams(filteredTeams);
             })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setPageLoading(false));
     }, []);
 
     const resetResults = () => { setResults(null); setError(null); };
+
+    useEffect(() => {
+        setStatLine(DEFAULT_STAT_LINES[statType] ?? 0);
+        resetResults();
+    }, [statType]);
 
     const handleSelectPlayer = (p) => {
         setPlayerA(p);
@@ -303,7 +319,7 @@ export default function MatchupsDashboard() {
             const res = await fetch(API.matchup({
                 playerApiId: playerA.externalApiId,
                 opponentApiId: opponentTeam.externalApiId,
-                statLine: DEFAULT_STAT_LINE,
+                statLine,
                 limit, includePlayoffs, statType,
             }));
             if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -329,9 +345,19 @@ export default function MatchupsDashboard() {
                 onTeamClick={(team) => navigate(`/team/${team.teamId}/players`, { state: { team } })}
             />
 
+            {pageLoading ? (
+                <div className="matchups-page-loader">
+                    <div className="results-loading">
+                        <div className="results-loading__spinner-wrap">
+                            <div className="results-loading__ring" />
+                        </div>
+                        <p className="results-loading__text">Loading matchup page...</p>
+                    </div>
+                </div>
+            ) : (
             <div className="matchups-content">
                 {/* ── Header ── */}
-                <header className="matchups-header fade-up">
+                <header className="matchups-header">
                     <p className="matchups-header__eyebrow">Player Analytics</p>
                     <h1 className="matchups-header__title">
                         Matchup <em>Analysis</em>
@@ -342,7 +368,7 @@ export default function MatchupsDashboard() {
                 </header>
 
                 {/* ── Search Row ── */}
-                <div className="matchups-search-row fade-up" style={{ animationDelay: "0.1s" }}>
+                <div className="matchups-search-row">
                     <PlayerSearch
                         player={playerA}
                         onSelect={handleSelectPlayer}
@@ -358,11 +384,11 @@ export default function MatchupsDashboard() {
                 </div>
 
                 {/* ── Controls Bar ── */}
-                <div className="controls-bar fade-up" style={{ animationDelay: "0.15s" }}>
+                <div className="controls-bar">
                     <div className="controls-stat-pills">
                         {STAT_TYPES.map((s) => (
                             <button key={s.key}
-                                    onClick={() => { setStatType(s.key); resetResults(); }}
+                                    onClick={() => setStatType(s.key)}
                                     className="controls-stat-pill"
                                     style={statType === s.key
                                         ? { color: s.color, background: s.glow, borderColor: `${s.color}50` }
@@ -394,6 +420,22 @@ export default function MatchupsDashboard() {
                         {includePlayoffs ? "✓ " : ""}Playoffs
                     </button>
 
+                    <div className="controls-divider" />
+
+                    <div className="controls-line-group">
+                        <span className="controls-line-label">Line</span>
+                        <input
+                            type="number"
+                            step="0.5"
+                            value={statLine}
+                            onChange={(e) => {
+                                setStatLine(parseFloat(e.target.value) || 0);
+                                resetResults();
+                            }}
+                            className="controls-line-input"
+                        />
+                    </div>
+
                     <div className="controls-spacer" />
 
                     <button onClick={analyze} disabled={!canAnalyze || loading}
@@ -408,7 +450,7 @@ export default function MatchupsDashboard() {
                 </div>
 
                 {/* ── Results Panel ── */}
-                <div className="results-panel fade-up" style={{ animationDelay: "0.2s" }}>
+                <div className="results-panel">
                     {!results && !loading && !error && (
                         <div className="results-empty">
                             <div className="results-empty__icon">
@@ -458,7 +500,7 @@ export default function MatchupsDashboard() {
                       </span>
                                         </p>
                                         <p className="results-header__meta">
-                                            {results.totalGames ?? games.length} games · Avg {results.average ?? "—"} {selectedStat.label} · Line {results.statLine ?? DEFAULT_STAT_LINE}
+                                            {results.totalGames ?? games.length} games · Avg {results.average ?? "—"} {selectedStat.label} · Line {results.statLine ?? statLine}
                                         </p>
                                     </div>
                                 </div>
@@ -482,7 +524,7 @@ export default function MatchupsDashboard() {
                                     ? <p className="results-games__empty">No historical matchup data found.</p>
                                     : games.map((game, i) => (
                                         <ResultRow key={i} result={game} statType={statType}
-                                                   statLine={results.statLine ?? DEFAULT_STAT_LINE}
+                                                   statLine={results.statLine ?? statLine}
                                                    index={i} total={games.length} />
                                     ))
                                 }
@@ -491,6 +533,7 @@ export default function MatchupsDashboard() {
                     )}
                 </div>
             </div>
+            )}
         </div>
     );
 }
