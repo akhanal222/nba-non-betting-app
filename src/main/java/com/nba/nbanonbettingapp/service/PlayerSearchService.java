@@ -121,6 +121,10 @@ public class PlayerSearchService {
                         p.setJerseyNumber(dto.jerseyNumber());
                         p.setIsActive(true);
                         p.setCreatedAt(OffsetDateTime.now());
+                        p.setCollege(dto.college());
+                        p.setDraftYear(dto.draftYear());
+                        p.setDraftRound(dto.draftRound());
+                        p.setDraftNumber(dto.draftNumber());
 
                         // If API includes a team, ensure the team exists in DB too
                         // Then connect player.team_id to that team record.
