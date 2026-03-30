@@ -13,10 +13,10 @@ const API = {
 };
 
 const STAT_TYPES = [
-    { key: "pts", label: "PTS", color: "#ffffff", glow: "rgba(232,197,71,0.15)" },
+    { key: "pts", label: "PTS", color: "#47e897", glow: "rgba(232,197,71,0.15)" },
     { key: "reb", label: "REB", color: "#47e897", glow: "rgba(71,232,151,0.15)" },
-    { key: "ast", label: "AST", color: "#479de8", glow: "rgba(71,157,232,0.15)" },
-    { key: "blk", label: "BLK", color: "#e86347", glow: "rgba(232,99,71,0.15)" },
+    { key: "ast", label: "AST", color: "#47e897", glow: "rgba(71,157,232,0.15)" },
+    { key: "blk", label: "BLK", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
     { key: "stl", label: "STL", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
     { key: "turnover", label: "TOVR", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
     { key: "fg3m", label: "3PT", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
@@ -417,7 +417,7 @@ export default function MatchupsDashboard() {
 
                     <button onClick={() => { setIncludePlayoffs(p => !p); resetResults(); }}
                             className={`controls-playoff-btn ${includePlayoffs ? "controls-playoff-btn--active" : ""}`}>
-                        {includePlayoffs ? "✓ " : ""}Playoffs
+                        {includePlayoffs ? "✓ " : "✗ " }Playoffs
                     </button>
 
                     <div className="controls-divider" />

@@ -192,6 +192,7 @@ export default function PlayerDetailPage() {
     const { state } = useLocation();
     const navigate = useNavigate();
     const player = state?.player;
+    const resolvedExternalApiId = player?.externalApiId ?? player?.playerId ?? null;
 
     const [activePage, setActivePage] = useState("PLAYERS");
     const [teams, setTeams] = useState([]);
@@ -214,20 +215,20 @@ export default function PlayerDetailPage() {
     }, []);
 
     useEffect(() => {
-        if (!player) return;
+        if (!resolvedExternalApiId) return;
         setRawLoading(true);
-        fetch(API.playerStats(player.externalApiId, 5))
+        fetch(API.playerStats(resolvedExternalApiId, 5))
             .then((r) => r.json())
             .then((d) => setRawStats(Array.isArray(d) ? d : []))
             .catch(() => setRawStats([]))
             .finally(() => setRawLoading(false));
-    }, [player]);
+    }, [resolvedExternalApiId]);
 
     useEffect(() => {
-        if (!player?.externalApiId) return;
+        if (!resolvedExternalApiId) return;
         setAnalysisLoading(true);
         fetch(API.recentAnalyze({
-            playerApiId: player.externalApiId,
+            playerApiId: resolvedExternalApiId,
             statLine,
             limit: 5,
             statType: "pts",
@@ -236,13 +237,13 @@ export default function PlayerDetailPage() {
             .then((data) => setAnalysisData(data))
             .catch(() => setAnalysisData(null))
             .finally(() => setAnalysisLoading(false));
-    }, [player, statLine]);
+    }, [resolvedExternalApiId, statLine]);
 
     const recentGamesChartData = buildRecentGamesChart(rawStats, statLine);
 
     if (!player) {
         return (
-            <div className="min-h-screen bg-[#060810] flex items-center justify-center">
+            <div className="min-h-screen bg-[#060810] flex items-center justify-center ">
                 <div className="text-center">
                     <p className="text-[#3a4a6a] text-lg mb-4">No player data found.</p>
                     <button onClick={() => navigate(-1)}
@@ -266,7 +267,7 @@ export default function PlayerDetailPage() {
 
                 {/* Back */}
                 <button onClick={() => navigate(-1)}
-                        className="flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] text-sm transition-colors w-fit">
+                className="!bg-transparent flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] text-sm transition-colors w-fit">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>

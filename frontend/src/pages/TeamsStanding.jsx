@@ -9,6 +9,7 @@ const RankBadge = ({ rank }) => {
     const colors = rank === 1 ? { bg: "#F6B100", text: "#1a1a2e" }
         : rank === 2 ? { bg: "#A0AEC0", text: "#1a1a2e" }
             : rank === 3 ? { bg: "#CD7F32", text: "#1a1a2e" }
+                : rank > 25 ? { bg: "transparent", text: "#718096" }
                 : { bg: "transparent", text: "#718096" };
     return (
         <div style={{
@@ -70,12 +71,6 @@ const Toast = ({ message, type, onDismiss }) => {
             {message}
         </div>
     );
-};
-
-const TOP_ROW_STYLES = {
-    1: { background: "rgba(246, 177, 0, 0.06)", borderLeft: "3px solid #F6B100" },
-    2: { background: "rgba(160, 174, 192, 0.05)", borderLeft: "3px solid #A0AEC0" },
-    3: { background: "rgba(205, 127, 50, 0.05)", borderLeft: "3px solid #CD7F32" },
 };
 
 export default function NBAStandings() {
@@ -155,11 +150,23 @@ export default function NBAStandings() {
 
     const leaderWins = filtered.length > 0 ? Math.max(...filtered.map(t => t.wins)) : 0;
 
+    // Dynamically calculate which teams should be highlighted red
+    const getTopRowStyle = (rank, totalTeams) => {
+        if (rank === 1) return { background: "rgba(246, 177, 0, 0.06)", borderLeft: "3px solid #F6B100" };
+        if (rank === 2) return { background: "rgba(160, 174, 192, 0.05)", borderLeft: "3px solid #A0AEC0" };
+        if (rank === 3) return { background: "rgba(205, 127, 50, 0.05)", borderLeft: "3px solid #CD7F32" };
+        // Last 8 teams in full league (30 teams), or last 4 teams in filtered views (15 teams)
+        const lastTeamsCount = totalTeams === 30 ? 10 : 5;
+        if (rank > totalTeams - lastTeamsCount) return { background: "rgba(205, 127, 50, 0.05)", borderLeft: "3px solid red" };
+        return { background: "transparent", borderLeft: "3px solid transparent" };
+    };
+
     const columns = [
         { key: "rank", label: "#", w: 50 },
         { key: "team", label: "TEAM", w: null },
         { key: "gamesPlayed", label: "GP", w: 55 },
         { key: "wins", label: "W", w: 50 },
+        { key: "winPercentage", label: "W%", w: 50 },
         { key: "losses", label: "L", w: 50 },
         { key: "pointDifference", label: "DIFF", w: 70 },
         { key: "gb", label: "GB", w: 55 },
@@ -276,9 +283,8 @@ export default function NBAStandings() {
                                 Failed to load standings
                             </div>
                             <div style={{ color: "#555c68", fontSize: 13, marginBottom: 16 }}>{error}</div>
-                            <div style={{ color: "#555c68", fontSize: 12, lineHeight: 1.6 }}>
-                                Make sure your API is running at <span style={{ color: "#8b949e", fontFamily: "'JetBrains Mono', monospace" }}>{API_BASE}</span>
-                                <br />and CORS is enabled for this origin.
+                            <div style={{ color: "#555c68", fontSize: 12, lineHeight: 1.6 }}><span style={{ color: "#8b949e", fontFamily: "'JetBrains Mono', monospace" }}>{API_BASE}</span>
+                                <br />
                             </div>
                             <button onClick={fetchStandings} style={{
                                 marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "none",
@@ -299,7 +305,7 @@ export default function NBAStandings() {
                             const gb = i === 0 ? "\u2014"
                                 : (((filtered[0].wins - row.wins) + (row.losses - filtered[0].losses)) / 2).toFixed(1);
                             const isHovered = hoveredRow === i;
-                            const topStyle = TOP_ROW_STYLES[rank] || { background: "transparent", borderLeft: "3px solid transparent" };
+                            const topStyle = getTopRowStyle(rank, filtered.length);
 
                             return (
                                 <div key={row.standingId}
@@ -321,7 +327,7 @@ export default function NBAStandings() {
                                     <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
                                         <div style={{
                                             width: 36, height: 36, borderRadius: 10,
-                                            background: "rgba(255,255,255,0.05)",
+                                            background: "rgb(210,211,220)",
                                             border: "1px solid rgba(255,255,255,0.08)",
                                             display: "flex", alignItems: "center", justifyContent: "center",
                                             overflow: "hidden",
@@ -365,6 +371,9 @@ export default function NBAStandings() {
                                         fontVariantNumeric: "tabular-nums",
                                     }}>
                                         {row.wins}
+                                    </div>
+                                    <div style={{ width: 50, textAlign: "center", fontSize: 14, color: "#8b949e", fontVariantNumeric: "tabular-nums" }}>
+                                        {(row.winPercentage * 100).toFixed(1) + "%"}
                                     </div>
 
                                     <div style={{ width: 50, textAlign: "center", fontSize: 14, color: "#8b949e", fontVariantNumeric: "tabular-nums" }}>

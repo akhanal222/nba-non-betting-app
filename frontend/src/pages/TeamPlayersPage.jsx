@@ -69,11 +69,10 @@ export default function TeamPlayersPage() {
             />
 
             {/* ── Nav ── */}
-            <nav className="flex items-center h-14 border-b border-[#111620] pl-6">
+            <nav className="flex items-center h-14 border-b border-[#111620] pl-6 !mt-5">
                 <button
                     onClick={() => navigate(-1)}
-                    className="bg-transparent border-none text-[#666] cursor-pointer text-[0.9rem] font-semibold tracking-[0.08em] flex items-center gap-2 transition-colors duration-200 hover:text-[#4f7cff] font-[inherit]"
-                >
+                    className="!bg-transparent border-none text-[#666] cursor-pointer text-[0.9rem] font-semibold tracking-[0.08em] flex items-center gap-2 transition-colors duration-200 hover:text-[#4f7cff] font-[inherit]">
                     <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -108,9 +107,9 @@ export default function TeamPlayersPage() {
             </div>
 
             {/* ── Players Section ── */}
-            <main className="px-5 py-10">
-                <div className="max-w-[1400px] mx-auto">
-                    <h2 className="team-heading">
+            <main className="pt-16 pb-10">
+                <div className="flex flex-col items-center">
+                    <h2 className="text-center text-2xl font-bold tracking-wide text-white !mt-10 !mb-16">
                         Team Players ({teamPlayers.length})
                     </h2>
 
@@ -119,12 +118,13 @@ export default function TeamPlayersPage() {
                     ) : error ? (
                         <p className="text-[#f87171] text-center text-[1.1rem]">{error}</p>
                     ) : teamPlayers.length > 0 ? (
-                        <div className="players-grid-team">
+                            <div className="grid grid-cols-4 gap-7 w-fit ">
                             {teamPlayers.map((player) => (
+                                <div key={player.id} className="w-[265px] ">
                                 <PlayerCard
-                                    key={player.id}
                                     player={{
                                         playerId: player.id,
+                                        externalApiId: player.externalApiId ?? player.id,
                                         firstName: player.firstName,
                                         lastName: player.lastName,
                                         position: player.position,
@@ -140,13 +140,24 @@ export default function TeamPlayersPage() {
                                             conference: team.conference,
                                             division: team.division,
                                         },
-                                        isActive: player.is_active,
+                                        isActive: player.isActive ?? player.is_active,
                                     }}
                                     selected={false}
-                                    onAnalyze={(p) =>
-                                        navigate(`/players/${p.playerId}`, { state: { player: p } })
-                                    }
+                                    onAnalyze={(p) => {
+                                        // Trigger background search and wait for completion before navigating
+                                        const searchQuery = `${p.firstName} ${p.lastName}`.trim();
+                                        fetch(`${API_BASE}/api/players/search?q=${encodeURIComponent(searchQuery)}`)
+                                            .then(() => {
+                                                // Search completed, now navigate to detail page
+                                                navigate(`/players/${p.playerId}`, { state: { player: p } });
+                                            })
+                                            .catch(() => {
+                                                // If search fails, navigate anyway (backend bootstrap will handle it)
+                                                navigate(`/players/${p.playerId}`, { state: { player: p } });
+                                            });
+                                    }}
                                 />
+                                </div>
                             ))}
                         </div>
                     ) : (
