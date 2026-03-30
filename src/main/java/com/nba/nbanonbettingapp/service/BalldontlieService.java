@@ -9,6 +9,7 @@ import com.nba.nbanonbettingapp.dto.BdlPlayerDTO;
 import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import com.nba.nbanonbettingapp.dto.PlayerWithImageDTO;
+import com.nba.nbanonbettingapp.dto.BdlSeasonAverageDTO;
 import com.nba.nbanonbettingapp.entity.NbaPlayerLookup;
 import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import org.springframework.core.ParameterizedTypeReference;
@@ -507,5 +508,17 @@ public class BalldontlieService {
         for (BdlGameDTO dto : games) {
             upsertGame(dto);
         }
+    }
+    public BdlResponseDTO<BdlSeasonAverageDTO> getSeasonAverages(Long playerApiId, int season) {
+        return client.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/season_averages/general")
+                        .queryParam("season", season)
+                        .queryParam("player_ids[]", playerApiId)
+                        .queryParam("type", "base")
+                        .queryParam("season_type", "regular")  // ← singular, no brackets
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
     }
 }

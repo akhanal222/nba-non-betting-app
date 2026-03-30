@@ -51,6 +51,24 @@ public class Player {
     @Column(name = "nba_player_id")
     private Long nbaPlayerId;
 
+    @Column(name = "college")
+    private String college;
+
+    @Column(name = "draft_year")
+    private Integer draftYear;
+
+    @Column(name = "draft_round")
+    private Integer draftRound;
+
+    @Column(name = "draft_number")
+    private Integer draftNumber;
+
+    @Column(name = "career_averages_json", columnDefinition = "TEXT")
+    private String careerAveragesJson;
+
+    @Column(name = "career_averages_cached_at")
+    private OffsetDateTime careerAveragesCachedAt;
+
     // Many players -> one team
     @ManyToOne
     @JoinColumn(name = "team_id")
