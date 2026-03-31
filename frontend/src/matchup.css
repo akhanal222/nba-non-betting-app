@@ -160,7 +160,7 @@ body {
     align-items: center;
     gap: 12px;
     background: #10131b;
-    border: 1px solid #1e2233;
+    border: 1px solid #ffffff;
     border-radius: 14px;
     padding: 14px 18px;
     height: 68px;
@@ -235,9 +235,9 @@ body {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    border: 1px solid #252a3d;
+    border: 1px solid #e86347;
     background: transparent;
-    color: #3a3f55;
+    color: #e86347;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -258,7 +258,7 @@ body {
     align-items: center;
     gap: 14px;
     border-radius: 14px;
-    border: 1px solid #1a1e2e;
+    border: 1px solid #ffffff;
     padding: 14px 18px;
     background: #0e1018;
     transition: all 0.25s;
@@ -714,7 +714,7 @@ body {
 }
 
 .results-header__vs {
-    color: #2a3045;
+    color: #ffffff;
     font-size: 14px;
     margin: 0 8px;
     font-family: inherit;
@@ -722,11 +722,11 @@ body {
 }
 
 .results-header__opponent {
-    color: #479de8;
+    color: #ffffff;
 }
 
 .results-header__meta {
-    color: #3a4565;
+    color: #ffffff;
     font-size: 12px;
     font-family: inherit;
     margin-top: 4px;
@@ -821,7 +821,7 @@ body {
 }
 
 .result-row__date {
-    color: #3a4565;
+    color: #ffffff;
     font-size: 13px;
     font-family: inherit;
     width: 110px;
@@ -865,7 +865,7 @@ body {
     font-weight: 700;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #2a3045;
+    color: #ffffff;
     font-family: inherit;
 }
 
@@ -878,14 +878,14 @@ body {
 
 .result-row__line-label {
     font-size: 9px;
-    color: #1e2535;
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-family: inherit;
 }
 
 .result-row__line-value {
-    color: #3a4565;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;

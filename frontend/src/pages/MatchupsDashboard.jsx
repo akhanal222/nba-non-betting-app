@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/Navbar.jsx";
+import PlayerVsPlayer from "./PlayerVsPlayer.jsx";
 import "../matchup.css";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -268,6 +269,7 @@ export default function MatchupsDashboard() {
     const [pageLoading, setPageLoading] = useState(true);
     const [activePage, setActivePage] = useState("MATCHUPS");
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState("team"); // "team" | "player"
 
     const [playerA, setPlayerA] = useState(null);
     const [opponentTeam, setOpponentTeam] = useState(null);
@@ -344,6 +346,60 @@ export default function MatchupsDashboard() {
                 teams={teams}
                 onTeamClick={(team) => navigate(`/team/${team.teamId}/players`, { state: { team } })}
             />
+            {/* ── Tab Toggle ── */}
+            <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 32px 0 32px" }}>
+                <div
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background: "#080c18",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                    }}
+                >
+                    <button
+                        onClick={() => setActiveTab("team")}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 18px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            border: "2px solid #ffffff",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: activeTab === "team" ? "#4f7cff" : "transparent",
+                            color: "#ffffff",
+                        }}
+                    >
+                        Player vs Team
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("player")}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 18px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            border: "2px solid #ffffff",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: activeTab === "player" ? "#4f7cff" : "transparent",
+                            color: "#ffffff",
+                        }}
+                    >
+                        Player vs Player
+                    </button>
+                </div>
+            </div>
 
             {pageLoading ? (
                 <div className="matchups-page-loader">
@@ -356,6 +412,8 @@ export default function MatchupsDashboard() {
                 </div>
             ) : (
             <div className="matchups-content">
+                {activeTab === "team" && (
+                    <>
                 {/* ── Header ── */}
                 <header className="matchups-header">
                     <p className="matchups-header__eyebrow">Player Analytics</p>
@@ -532,7 +590,12 @@ export default function MatchupsDashboard() {
                         </>
                     )}
                 </div>
-            </div>
+                    </>
+            )}
+                {activeTab === "player" && (
+                    <PlayerVsPlayer />
+                )}
+        </div>
             )}
         </div>
     );
