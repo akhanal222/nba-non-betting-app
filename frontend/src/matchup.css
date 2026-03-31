@@ -757,10 +757,38 @@ body {
 .results-hitrate__label {
     font-size: 9px;
     font-family: inherit;
-    color: #2a3045;
+    color: #ffffff;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-top: 2px;
+}
+
+.results-chart {
+    margin: 16px;
+    padding: 20px;
+    border: 1px solid #14171f;
+    border-radius: 16px;
+    background: #0c1018;
+}
+
+.results-chart__header {
+    margin-bottom: 16px;
+}
+
+.results-chart__title {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.results-chart__subtitle {
+    color: #ffffff;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.results-chart__canvas {
+    height: 280px;
 }
 
 /* Game rows container */

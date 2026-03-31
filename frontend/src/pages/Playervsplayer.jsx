@@ -1,6 +1,17 @@
 import { useEffect, useState, useRef } from "react";
+import { Bar } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend,
+} from "chart.js";
 import "../matchup.css";
 import "../pvp.css";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 const API = {
     playerSearch: (q) =>
@@ -14,6 +25,64 @@ function playerHeadshot(id) {
         ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
         : null;
 }
+// Chart settings
+function buildComparisonChartData(playerOneName, playerTwoName, statsA, statsB) {
+    const chartRows = STAT_ROWS.filter((row) => ["pts", "reb", "ast", "stl", "blk", "fg3m"].includes(row.key));
+
+    return {
+        labels: chartRows.map((row) => row.label),
+        datasets: [
+            {
+                label: playerOneName,
+                data: chartRows.map((row) => statsA?.[row.key] ?? 0),
+                backgroundColor: "#4f7cff",
+                borderRadius: 8,
+                maxBarThickness: 28,
+            },
+            {
+                label: playerTwoName,
+                data: chartRows.map((row) => statsB?.[row.key] ?? 0),
+                backgroundColor: "#47e897",
+                borderRadius: 8,
+                maxBarThickness: 28,
+            },
+        ],
+    };
+}
+
+const comparisonChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: "#ffffff",
+                boxWidth: 10,
+                boxHeight: 10,
+            },
+        },
+    },
+    scales: {
+        x: {
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#ffffff",
+            },
+        },
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#ffffff",
+                precision: 0,
+            },
+        },
+    },
+};
 
 //  Player Search
 function CompPlayerSearch({ player, onSelect, onClear, label, excludeId }) {
@@ -238,11 +307,9 @@ const STAT_ROWS = [
     { label: "3P%", key: "fg3Pct", format: "pct" },
     { label: "FT%", key: "ftPct", format: "pct" },
     { label: "3PM", key: "fg3m" },
-    { label: "MPG", key: "minutesPerGame" },
     { label: "GP", key: "gamesPlayed" },
 ];
 
-// Main Export
 export default function PlayerVsPlayer() {
     const [playerA, setPlayerA] = useState(null);
     const [playerB, setPlayerB] = useState(null);
@@ -274,6 +341,14 @@ export default function PlayerVsPlayer() {
     const pTwo = compData?.playerTwo;
     const statsA = statView === "season" ? pOne?.seasonAverages : pOne?.careerAverages;
     const statsB = statView === "season" ? pTwo?.seasonAverages : pTwo?.careerAverages;
+    const comparisonChartData = statsA && statsB
+        ? buildComparisonChartData(
+            `${pOne?.firstName ?? ""} ${pOne?.lastName ?? ""}`.trim() || "Player One",
+            `${pTwo?.firstName ?? ""} ${pTwo?.lastName ?? ""}`.trim() || "Player Two",
+            statsA,
+            statsB
+        )
+        : null;
 
     return (
         <>
@@ -409,6 +484,20 @@ export default function PlayerVsPlayer() {
                                 </div>
                             </div>
                         </div>
+
+                        {comparisonChartData && (
+                            <div className="results-chart">
+                                <div className="results-chart__header">
+                                    <p className="results-chart__title">Head-to-Head Chart</p>
+                                    <p className="results-chart__subtitle">
+                                        {statView === "season" ? "Season averages" : "Career averages"} across core categories
+                                    </p>
+                                </div>
+                                <div className="results-chart__canvas">
+                                    <Bar data={comparisonChartData} options={comparisonChartOptions} />
+                                </div>
+                            </div>
+                        )}
 
                         {/* ── Stat Bars ── */}
                         <div className="results-games">
