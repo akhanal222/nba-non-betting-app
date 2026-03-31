@@ -8,6 +8,11 @@ const API = {
     playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
 };
 const LAST_FULL_SEASON = 2025;
+const STAT_OPTIONS = [
+    { key: "pts", label: "PTS" },
+    { key: "reb", label: "REB" },
+    { key: "ast", label: "AST" },
+];
 
 export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
@@ -17,8 +22,9 @@ export default function TopPlayers() {
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState("PLAYERS");
     const navigate = useNavigate();
-    const [teams, setTeams] = useState([])
+    const [teams, setTeams] = useState([]);
     const [q, setQ] = useState("");
+    const [statType, setStatType] = useState("pts");
 
     useEffect(() => {
         fetch(API.teams)
@@ -35,7 +41,7 @@ export default function TopPlayers() {
             setLoading(true);
             try {
                 const res = await fetch(
-                    `${API_BASE}/bdl/leaders/top20?statType=pts&season=${LAST_FULL_SEASON}`
+                    `${API_BASE}/bdl/leaders/top20?statType=${statType}&season=${LAST_FULL_SEASON}`
                 );
 
                 const data = await res.json();
@@ -51,10 +57,8 @@ export default function TopPlayers() {
                         entry?.stat_value ??
                         entry?.amount ??
                         entry?.leader_value ??
-                        entry?.pts ??
-                        entry?.points ??
-                        p?.pts ??
-                        p?.points ??
+                        entry?.[statType] ??
+                        p?.[statType] ??
                         "—";
 
                     return {
@@ -138,7 +142,7 @@ export default function TopPlayers() {
         return () => {
             cancelled = true;
         };
-    }, [teams]);
+    }, [teams, statType]);
 
     useEffect(() => {
         const query = q.trim();
@@ -255,7 +259,7 @@ export default function TopPlayers() {
                 }
             />
 
-            <div style={{ padding: "40px" , alignContent: "center"}}>
+            <div style={{ padding: "40px", alignContent: "center" }}>
 
                 <h1 style={{
                     color: "#fff",
@@ -263,10 +267,38 @@ export default function TopPlayers() {
                     fontWeight: "bold",
                     letterSpacing: "1px",
                     textTransform: "uppercase",
-                    textAlign : "center",
+                    textAlign: "center",
                     padding: "50px"
                 }}
                 >Top 20 players Last Season </h1>
+
+                <div
+                    style={{
+                        display: "flex",
+                        gap: 12,
+                        justifyContent: "center",
+                        marginBottom: 24,
+                    }}
+                >
+                    {STAT_OPTIONS.map((stat) => (
+                        <button
+                            key={stat.key}
+                            onClick={() => setStatType(stat.key)}
+                            style={{
+                                padding: "10px 18px",
+                                borderRadius: 10,
+                                border: "1px solid #ffffff",
+                                background: statType === stat.key ? "#4f7cff" : "transparent",
+                                color: "#ffffff",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                            }}
+                        >
+                            {stat.label}
+                        </button>
+                    ))}
+                </div>
 
                 <div className="player-search-shell">
                     <div style={{

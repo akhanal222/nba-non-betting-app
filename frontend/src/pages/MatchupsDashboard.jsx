@@ -1,7 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Line } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend,
+} from "chart.js";
 import NavBar from "../components/Navbar.jsx";
+import PlayerVsPlayer from "./PlayerVsPlayer.jsx";
 import "../matchup.css";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const API = {
@@ -40,6 +53,88 @@ function playerHeadshot(id) {
         ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
         : null;
 }
+// Chart settings
+function buildMatchupChartData(games, statLine, statLabel, statColor) {
+    const orderedGames = [...games].reverse();
+
+    return {
+        labels: orderedGames.map((game) =>
+            game.date
+                ? new Date(game.date + "T00:00:00").toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                })
+                : "—"
+        ),
+        datasets: [
+            {
+                label: statLabel,
+                data: orderedGames.map((game) => game.statValue ?? 0),
+                borderColor: statColor,
+                backgroundColor: `${statColor}33`,
+                tension: 0.28,
+                borderWidth: 3,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: false,
+            },
+            {
+                label: "Line",
+                data: orderedGames.map(() => statLine),
+                borderColor: "#ffffff",
+                backgroundColor: "rgba(255,255,255,0.14)",
+                borderWidth: 2,
+                borderDash: [6, 6],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                tension: 0,
+                fill: false,
+            },
+        ],
+    };
+}
+
+const matchupChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: "#ffffff",
+                boxWidth: 10,
+                boxHeight: 10,
+            },
+        },
+        tooltip: {
+            mode: "index",
+            intersect: false,
+        },
+    },
+    interaction: {
+        mode: "index",
+        intersect: false,
+    },
+    scales: {
+        x: {
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#ffffff",
+            },
+        },
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: "rgba(26,37,64,0.45)",
+            },
+            ticks: {
+                color: "#ffffff",
+                precision: 0,
+            },
+        },
+    },
+};
 
 // ── Player Search ─────────────────────────────────────────────────────────────
 function PlayerSearch({ player, onSelect, onClear }) {
@@ -268,6 +363,7 @@ export default function MatchupsDashboard() {
     const [pageLoading, setPageLoading] = useState(true);
     const [activePage, setActivePage] = useState("MATCHUPS");
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState("team"); // "team" | "player"
 
     const [playerA, setPlayerA] = useState(null);
     const [opponentTeam, setOpponentTeam] = useState(null);
@@ -333,6 +429,9 @@ export default function MatchupsDashboard() {
     const games = results?.games ?? (Array.isArray(results) ? results : []);
     const hitCount = games.filter((g) => g.hitLine).length;
     const hitRate = games.length > 0 ? ((hitCount / games.length) * 100).toFixed(0) : 0;
+    const matchupChartData = games.length > 0
+        ? buildMatchupChartData(games, results?.statLine ?? statLine, selectedStat?.label ?? statType.toUpperCase(), selectedStat?.color ?? "#47e897")
+        : null;
 
     return (
         <div className="matchups-page">
@@ -344,6 +443,60 @@ export default function MatchupsDashboard() {
                 teams={teams}
                 onTeamClick={(team) => navigate(`/team/${team.teamId}/players`, { state: { team } })}
             />
+            {/* ── Tab Toggle ── */}
+            <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 32px 0 32px" }}>
+                <div
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background: "#080c18",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                    }}
+                >
+                    <button
+                        onClick={() => setActiveTab("team")}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 18px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            border: "2px solid #ffffff",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: activeTab === "team" ? "#4f7cff" : "transparent",
+                            color: "#ffffff",
+                        }}
+                    >
+                        Player vs Team
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("player")}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 18px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            border: "2px solid #ffffff",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            background: activeTab === "player" ? "#4f7cff" : "transparent",
+                            color: "#ffffff",
+                        }}
+                    >
+                        Player vs Player
+                    </button>
+                </div>
+            </div>
 
             {pageLoading ? (
                 <div className="matchups-page-loader">
@@ -356,6 +509,8 @@ export default function MatchupsDashboard() {
                 </div>
             ) : (
             <div className="matchups-content">
+                {activeTab === "team" && (
+                    <>
                 {/* ── Header ── */}
                 <header className="matchups-header">
                     <p className="matchups-header__eyebrow">Player Analytics</p>
@@ -519,6 +674,20 @@ export default function MatchupsDashboard() {
                                 )}
                             </div>
 
+                            {matchupChartData && (
+                                <div className="results-chart">
+                                    <div className="results-chart__header">
+                                        <p className="results-chart__title">Recent Matchup Trend</p>
+                                        <p className="results-chart__subtitle">
+                                            {selectedStat.label} by game against {results.opponentTeamName ?? opponentTeam.full_name ?? opponentTeam.teamName}
+                                        </p>
+                                    </div>
+                                    <div className="results-chart__canvas">
+                                        <Line data={matchupChartData} options={matchupChartOptions} />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="results-games">
                                 {games.length === 0
                                     ? <p className="results-games__empty">No historical matchup data found.</p>
@@ -532,7 +701,12 @@ export default function MatchupsDashboard() {
                         </>
                     )}
                 </div>
-            </div>
+                    </>
+            )}
+                {activeTab === "player" && (
+                    <PlayerVsPlayer />
+                )}
+        </div>
             )}
         </div>
     );
