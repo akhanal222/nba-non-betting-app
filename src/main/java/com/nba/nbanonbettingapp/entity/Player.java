@@ -69,6 +69,12 @@ public class Player {
     @Column(name = "career_averages_cached_at")
     private OffsetDateTime careerAveragesCachedAt;
 
+    @Column(name = "ewma_json", columnDefinition = "TEXT")
+    private String ewmaJson;
+
+    @Column(name = "ewma_computed_at")
+    private OffsetDateTime ewmaComputedAt;
+
     // Many players -> one team
     @ManyToOne
     @JoinColumn(name = "team_id")

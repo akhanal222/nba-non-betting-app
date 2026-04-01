@@ -17,4 +17,14 @@ public class BalldontlieConfig {
                 .defaultHeader("Authorization", apiKey)
                 .build();
     }
+    @Bean
+    public RestClient balldontlieRootClient(
+            @Value("${balldontlie.root-url}") String rootUrl,
+            @Value("${balldontlie.api-key}") String apiKey
+    ) {
+        return RestClient.builder()
+                .baseUrl(rootUrl)
+                .defaultHeader("Authorization", apiKey)
+                .build();
+    }
 }
