@@ -34,9 +34,9 @@
 .player-detail-line-input {
     width: 88px;
     padding: 8px 10px;
-    border: 1px solid #1a2540;
-    background: #060810;
-    color: #fff;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface-2);
+    color: var(--text-primary);
     font-size: 12px;
     font-weight: 600;
     text-align: center;
@@ -44,5 +44,5 @@
 }
 
 .player-detail-line-input:focus {
-    border-color: #4f7cff;
+    border-color: var(--accent);
 }

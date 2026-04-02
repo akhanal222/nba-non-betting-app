@@ -16,6 +16,17 @@ const STAT_OPTIONS = [
     { key: "ast", label: "AST" },
 ];
 
+const UI = {
+    pageBg: "#0b1020",
+    surface: "#121a2e",
+    surfaceAlt: "#0f1629",
+    border: "#2c395c",
+    textPrimary: "#f4f7ff",
+    textSecondary: "#c4cee6",
+    textMuted: "#a5b2d1",
+    accent: "#5d84ff",
+};
+
 export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
     const [topPlayers, setTopPlayers] = useState([]);
@@ -260,7 +271,7 @@ export default function TopPlayers() {
     };
 
     return (
-        <div style={{ minHeight: "100vh", background: "#0a0c14", color: "#fff" }}>
+        <div style={{ minHeight: "100vh", background: UI.pageBg, color: UI.textPrimary }}>
             <NavBar
                 activePage={activePage}
                 setActivePage={setActivePage}
@@ -273,7 +284,7 @@ export default function TopPlayers() {
             <div style={{ padding: "40px", alignContent: "center" }}>
 
                 <h1 style={{
-                    color: "#fff",
+                    color: UI.textPrimary,
                     fontSize: "36px",
                     fontWeight: "bold",
                     letterSpacing: "1px",
@@ -298,9 +309,9 @@ export default function TopPlayers() {
                             style={{
                                 padding: "10px 18px",
                                 borderRadius: 10,
-                                border: "1px solid #ffffff",
-                                background: statType === stat.key ? "#4f7cff" : "transparent",
-                                color: "#ffffff",
+                                border: `1px solid ${UI.border}`,
+                                background: statType === stat.key ? UI.accent : UI.surface,
+                                color: UI.textPrimary,
                                 fontWeight: 700,
                                 cursor: "pointer",
                                 transition: "all 0.2s",
@@ -315,8 +326,8 @@ export default function TopPlayers() {
                     <div style={{
                         display: "flex",
                         alignItems: "center",
-                        background: "#111620",
-                        border: "1.5px solid #1e2333",
+                        background: UI.surfaceAlt,
+                        border: `1.5px solid ${UI.border}`,
                         borderRadius: 10,
                         padding: "0 16px",
                     }}>
@@ -331,7 +342,7 @@ export default function TopPlayers() {
                                 background: "transparent",
                                 border: "none",
                                 outline: "none",
-                                color: "#ccc",
+                                color: UI.textPrimary,
                                 fontSize: "0.9rem",
                                 padding: "13px 0",
                                 fontFamily: "inherit"
@@ -339,9 +350,9 @@ export default function TopPlayers() {
                         />
                         <button
                             onClick={searchPlayers}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
-                            onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
-                            onMouseLeave={e => e.currentTarget.style.color = "#555"}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: UI.textMuted, display: "flex", alignItems: "center" }}
+                            onMouseEnter={e => e.currentTarget.style.color = UI.accent}
+                            onMouseLeave={e => e.currentTarget.style.color = UI.textMuted}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -374,7 +385,7 @@ export default function TopPlayers() {
                                             <span style={{ color: "#fff", fontWeight: 600 }}>
                                                 {player.firstName} {player.lastName}
                                             </span>
-                                            <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                                            <span style={{ color: UI.textSecondary, fontSize: "0.75rem" }}>
                                                 {player.team?.abbreviation ?? "—"} • {player.position ?? "—"}
                                             </span>
                                         </div>
@@ -387,9 +398,9 @@ export default function TopPlayers() {
 
 
                 {loading ? (
-                    <p style={{ color: "#888" }}>Loading players...</p>
+                    <p style={{ color: UI.textSecondary }}>Loading players...</p>
                 ) : players.length === 0 ? (
-                    <p style={{ color: "#888" }}>No players found.</p>
+                    <p style={{ color: UI.textSecondary }}>No players found.</p>
                 ) : (
                     <div className="player-grid">
                         {players.map((player) => (
@@ -410,11 +421,18 @@ export default function TopPlayers() {
 }
 
 function LeaderboardCard({ player, onClick, selected }) {
+    const [imgError, setImgError] = useState(false);
+    const initials = `${player.firstName?.[0] ?? ""}${player.lastName?.[0] ?? ""}`.toUpperCase();
+
+    useEffect(() => {
+        setImgError(false);
+    }, [player?.nbaPlayerId]);
+
     return (
         <div
             style={{
-                background: selected ? "#1a1f2e" : "#131720",
-                border: `1.5px solid ${selected ? "#4f7cff" : "#1e2333"}`,
+                background: selected ? "#1a2745" : UI.surface,
+                border: `1.5px solid ${selected ? UI.accent : UI.border}`,
                 borderRadius: 14,
                 padding: 28,
                 display: "flex",
@@ -426,7 +444,7 @@ function LeaderboardCard({ player, onClick, selected }) {
         >
             <div
                 style={{
-                    color: "#4f7cff",
+                    color: "#9eb8ff",
                     fontSize: "0.75rem",
                     fontWeight: 800,
                     letterSpacing: "0.08em",
@@ -437,7 +455,7 @@ function LeaderboardCard({ player, onClick, selected }) {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {player.nbaPlayerId ? (
+                {player.nbaPlayerId && player.imageUrl && !imgError ? (
                     <img
                         src={player.imageUrl}
                         alt={`${player.firstName} ${player.lastName}`}
@@ -449,8 +467,8 @@ function LeaderboardCard({ player, onClick, selected }) {
                             border: "2px solid #4f7cff",
                             flexShrink: 0,
                         }}
-                        onError={(e) => {
-                            e.currentTarget.style.display = "none";
+                        onError={() => {
+                            setImgError(true);
                         }}
                     />
                 ) : (
@@ -460,16 +478,24 @@ function LeaderboardCard({ player, onClick, selected }) {
                             height: 90,
                             borderRadius: "50%",
                             background: "#2a3be0",
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 700,
+                            fontSize: "1rem",
                             flexShrink: 0,
                         }}
-                    />
+                    >
+                        {initials || "--"}
+                    </div>
                 )}
 
                 <div style={{ minWidth: 0 }}>
-                    <div style={{ color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}>
+                    <div style={{ color: UI.textPrimary, fontWeight: 700, fontSize: "1.1rem" }}>
                         {player.firstName} {player.lastName}
                     </div>
-                    <div style={{ color: "#777", fontSize: "0.8rem" }}>
+                    <div style={{ color: UI.textSecondary, fontSize: "0.8rem" }}>
                         {player.team?.abbreviation ?? "—"}  {player.team?.teamName ?? "—"}
                     </div>
                 </div>
@@ -491,9 +517,9 @@ function LeaderboardCard({ player, onClick, selected }) {
             <button
                 onClick={() => onClick(player)}
                 style={{
-                    background: selected ? "#2a3be0" : "#1a1f2e",
-                    border: selected ? "none" : "1px solid #2a2f44",
-                    color: selected ? "#fff" : "#888",
+                    background: selected ? UI.accent : "#1b2644",
+                    border: selected ? "none" : `1px solid ${UI.border}`,
+                    color: UI.textPrimary,
                     borderRadius: 8,
                     padding: "12px 0",
                     fontSize: "1rem",
@@ -513,10 +539,10 @@ function LeaderboardCard({ player, onClick, selected }) {
 function Stat({ value, label }) {
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <span style={{ color: "#4f7cff", fontWeight: 700, fontSize: "1.2rem" }}>
+      <span style={{ color: "#9eb8ff", fontWeight: 700, fontSize: "1.2rem" }}>
         {value ?? "—"}
       </span>
-            <span style={{ color: "#666", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
+            <span style={{ color: UI.textMuted, fontSize: "0.72rem", letterSpacing: "0.08em" }}>
         {label}
       </span>
         </div>
