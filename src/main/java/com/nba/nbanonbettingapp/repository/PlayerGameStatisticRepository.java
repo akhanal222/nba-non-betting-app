@@ -12,7 +12,17 @@ import java.util.Optional;
 public interface PlayerGameStatisticRepository extends JpaRepository<PlayerGameStatistic, Long> {
     // Recent stats for a player, ordered by game date (newest first), with dynamic limit
     List<PlayerGameStatistic> findByPlayer_PlayerIdOrderByGame_GameDateDesc(Long playerId, Pageable pageable);
+
     Optional<PlayerGameStatistic> findByGame_GameIdAndPlayer_PlayerId(Long gameId, Long playerId);
+
     @Query("select max(s.syncedAt) from PlayerGameStatistic s where s.player.playerId = :playerId")
+
     Optional<OffsetDateTime> findLatestSyncedAtByPlayerId(Long playerId);
+
+    List<PlayerGameStatistic> findTop5ByPlayer_PlayerIdAndGame_SeasonYearOrderByGame_GameDateDesc(
+            Long playerId,
+            Integer seasonYear
+    );
+
+    Integer countByPlayer_PlayerIdAndGame_SeasonYear(Long playerId, Integer seasonYear);
 }

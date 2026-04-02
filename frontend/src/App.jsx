@@ -52,6 +52,20 @@ function playerHeadshotUrl(nbaPlayerId) {
   return `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaPlayerId}.png`;
 }
 
+function normalizePlayer(player) {
+  return {
+    ...player,
+    playerId: player?.playerId ?? player?.externalApiId ?? null,
+    externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+    firstName: player?.firstName ?? "",
+    lastName: player?.lastName ?? "",
+    position: player?.position ?? null,
+    jerseyNumber: player?.jerseyNumber ?? null,
+    nbaPlayerId: player?.nbaPlayerId ?? null,
+    team: player?.team ?? {},
+  };
+}
+
 export default function App() {
   const navigate = useNavigate();
 
@@ -138,13 +152,17 @@ export default function App() {
     setShowSuggestions(false);
     fetch(API.playerSearch(query))
         .then(r => r.json())
-        .then(data => { setPlayers(Array.isArray(data) ? data : []); setLoadingPlayers(false); })
+        .then(data => {
+          const safePlayers = (Array.isArray(data) ? data : []).map(normalizePlayer);
+          setPlayers(safePlayers);
+          setLoadingPlayers(false);
+        })
         .catch(() => setLoadingPlayers(false));
   };
 
   const handleSuggestionSelect = (player) => {
     setQ(`${player.firstName} ${player.lastName}`.trim());
-    setPlayers([player]);
+    setPlayers([normalizePlayer(player)]);
     setHasSearched(true);
     setShowSuggestions(false);
     setSuggestions([]);

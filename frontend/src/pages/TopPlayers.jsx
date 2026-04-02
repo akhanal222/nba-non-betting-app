@@ -6,6 +6,8 @@ const API_BASE = "http://localhost:8080";
 const API = {
     teams: "http://localhost:8080/teams",
     playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
+    leaderboard: (statType, season) =>
+        `${API_BASE}/leaderboard/${statType}?season=${season}`,
 };
 const LAST_FULL_SEASON = 2025;
 const STAT_OPTIONS = [
@@ -26,6 +28,57 @@ export default function TopPlayers() {
     const [q, setQ] = useState("");
     const [statType, setStatType] = useState("pts");
 
+    const resolveTeamByName = (teamName) => {
+        if (!teamName) return null;
+
+        return (
+            teams.find(
+                (team) => team.teamName?.toLowerCase() === String(teamName).toLowerCase()
+            ) ?? null
+        );
+    };
+
+    const hydratePlayerDetails = async (basePlayer) => {
+        const fullName = `${basePlayer.firstName ?? ""} ${basePlayer.lastName ?? ""}`.trim();
+        if (fullName.length < 2) return basePlayer;
+
+        try {
+            const res = await fetch(API.playerSearch(fullName));
+            if (!res.ok) return basePlayer;
+
+            const candidates = await res.json();
+            if (!Array.isArray(candidates) || candidates.length === 0) return basePlayer;
+
+            const matched = candidates.find(
+                (p) => p?.externalApiId && p.externalApiId === basePlayer.externalApiId
+            ) ?? candidates[0];
+
+            const nbaPlayerId = matched?.nbaPlayerId ?? basePlayer.nbaPlayerId ?? null;
+
+            return {
+                ...basePlayer,
+                position: basePlayer.position ?? matched?.position ?? null,
+                height: matched?.height ?? null,
+                weight: matched?.weight ?? null,
+                jerseyNumber: matched?.jerseyNumber ?? null,
+                nbaPlayerId,
+                imageUrl: nbaPlayerId
+                    ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaPlayerId}.png`
+                    : null,
+                team: {
+                    abbreviation: basePlayer.team?.abbreviation ?? matched?.team?.abbreviation ?? null,
+                    teamName: basePlayer.team?.teamName ?? matched?.team?.teamName ?? null,
+                    city: basePlayer.team?.city ?? matched?.team?.city ?? null,
+                    conference: basePlayer.team?.conference ?? matched?.team?.conference ?? null,
+                    division: basePlayer.team?.division ?? matched?.team?.division ?? null,
+                    nbaTeamId: basePlayer.team?.nbaTeamId ?? matched?.team?.nbaTeamId ?? null,
+                },
+            };
+        } catch {
+            return basePlayer;
+        }
+    };
+
     useEffect(() => {
         fetch(API.teams)
             .then(r => r.json())
@@ -34,99 +87,55 @@ export default function TopPlayers() {
     }, []);
 
     useEffect(() => {
-        if (teams.length === 0) return;
         let cancelled = false;
 
         async function loadPlayers() {
             setLoading(true);
             try {
-                const res = await fetch(
-                    `${API_BASE}/bdl/leaders/top20?statType=${statType}&season=${LAST_FULL_SEASON}`
-                );
+                const res = await fetch(API.leaderboard(statType, LAST_FULL_SEASON));
+                if (!res.ok) {
+                    throw new Error(`Leaderboard request failed with status ${res.status}`);
+                }
 
                 const data = await res.json();
-                const rawPlayers = Array.isArray(data?.data) ? data.data : [];
+                const rows = Array.isArray(data) ? data : [];
 
-                const mappedPlayers = rawPlayers.map((entry, index) => {
-                    const p = entry?.player ?? {};
-                    const matchedTeam =
-                        teams.find((team) => team.externalApiId === p.team_id) ?? null;
-
-                    const statistic =
-                        entry?.value ??
-                        entry?.stat_value ??
-                        entry?.amount ??
-                        entry?.leader_value ??
-                        entry?.[statType] ??
-                        p?.[statType] ??
-                        "—";
+                const mappedPlayers = rows.map((entry, index) => {
+                    const matchedTeam = resolveTeamByName(entry?.teamName);
 
                     return {
-                        playerId: p.id ?? index,
-                        externalApiId: p.id ?? null,
-                        firstName: p.first_name ?? "",
-                        lastName: p.last_name ?? "",
-                        position: p.position ?? null,
-                        height: p.height ?? null,
-                        weight: p.weight ?? null,
-                        jerseyNumber: p.jersey_number ?? null,
-                        nbaPlayerId: p.nbaPlayerId ?? null,
-                        imageUrl: p.imageUrl ?? null,
+                        playerId: entry?.playerId ?? index,
+                        externalApiId: entry?.externalApiId ?? null,
+                        firstName: entry?.firstName ?? "",
+                        lastName: entry?.lastName ?? "",
+                        position: entry?.position ?? null,
+                        height: null,
+                        weight: null,
+                        jerseyNumber: null,
+                        nbaPlayerId: null,
+                        imageUrl: null,
                         rank: entry?.rank ?? index + 1,
-                        statistic,
-                        avgLast5: "—",
+                        statistic: entry?.seasonAvg ?? "—",
+                        avgLast5: entry?.last5Avg ?? "—",
                         team: {
                             abbreviation: matchedTeam?.abbreviation ?? null,
-                            teamName: matchedTeam?.teamName ?? null,
+                            teamName: entry?.teamName ?? matchedTeam?.teamName ?? null,
                             city: matchedTeam?.city ?? null,
                             conference: matchedTeam?.conference ?? null,
                             division: matchedTeam?.division ?? null,
+                            nbaTeamId: matchedTeam?.nbaTeamId ?? null,
                         },
                     };
                 });
 
-                if (!cancelled) {
-                    setPlayers(mappedPlayers);
-                    setTopPlayers(mappedPlayers);
-                    setLoading(false);
-                }
-
-                const playersWithLast5 = await Promise.all(
-                    mappedPlayers.map(async (player) => {
-                        try {
-                            const statsRes = await fetch(
-                                `${API_BASE}/stats/player/external/${player.externalApiId}?limit=5`
-                            );
-                            const statsData = await statsRes.json();
-                            const games = Array.isArray(statsData) ? statsData : [];
-
-                            const totalPoints = games.reduce(
-                                (sum, game) => sum + (game.pointsScored ?? 0),
-                                0
-                            );
-
-                            const avgLast5 = games.length
-                                ? (totalPoints / games.length).toFixed(1)
-                                : "- -";
-
-                            return {
-                                ...player,
-                                avgLast5,
-                            };
-                        } catch {
-                            return {
-                                ...player,
-                                avgLast5: "—",
-                            };
-                        }
-                    })
+                const enrichedPlayers = await Promise.all(
+                    mappedPlayers.map((player) => hydratePlayerDetails(player))
                 );
 
                 if (!cancelled) {
-                    setPlayers((current) =>
-                        current.length === mappedPlayers.length ? playersWithLast5 : current
-                    );
-                    setTopPlayers(playersWithLast5);
+                    setPlayers(enrichedPlayers);
+                    setTopPlayers(enrichedPlayers);
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error("Failed to load top players:", error);
@@ -206,6 +215,7 @@ export default function TopPlayers() {
                     city: player.team?.city ?? null,
                     conference: player.team?.conference ?? null,
                     division: player.team?.division ?? null,
+                    nbaTeamId: player.team?.nbaTeamId ?? null,
                 },
             }));
 
@@ -242,6 +252,7 @@ export default function TopPlayers() {
                 city: player.team?.city ?? null,
                 conference: player.team?.conference ?? null,
                 division: player.team?.division ?? null,
+                nbaTeamId: player.team?.nbaTeamId ?? null,
             },
         }]);
         setShowSuggestions(false);
