@@ -119,7 +119,7 @@ const recentGamesChartOptions = {
                 color: "rgba(26,37,64,0.45)",
             },
             ticks: {
-                color: "#8bb5b4",
+                color: "#ffffff",
             },
         },
         y: {
@@ -128,7 +128,7 @@ const recentGamesChartOptions = {
                 color: "rgba(26,37,64,0.45)",
             },
             ticks: {
-                color: "#8bb5b4",
+                color: "#ffffff",
                 precision: 0,
             },
         },
@@ -153,15 +153,15 @@ function RawGameRow({ stat, index }) {
 
     return (
         <div className="flex items-center gap-10 px-10 py-8 bg-[#0a0e1c] border border-[#1a2540] hover:border-[#253660] transition-colors">
-            <span className="text-[#667594] text-xs font-mono w-5 text-right">{index + 1}</span>
-            <span className="text-[#667594] text-sm font-mono w-20">{date}</span>
+            <span className="text-[white] text-xs font-mono w-5 text-right">{index + 1}</span>
+            <span className="text-[white] text-sm font-mono w-20">{date}</span>
 
-            <div className="flex items-center gap-2 w-24">
+            <div className="flex items-center gap-2 w-24 mb-4!">
                 {opp?.nbaTeamId && (
                     <img src={logo(opp.nbaTeamId)} alt="" className="w-5 h-5 object-contain"
                          onError={(e) => { e.target.style.display = "none"; }} />
                 )}
-                <span className="text-[#667594] text-xss font-large">
+                <span className="text-[white] text-xss font-large">
           {isHome ? "vs" : "vs"} {opp?.abbreviation ?? "—"}
         </span>
             </div>
@@ -286,40 +286,41 @@ export default function PlayerDetailPage() {
                                  className="w-full h-full object-contain object-bottom"
                                  onError={() => setImgErr(true)} />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-6xl font-bold text-[#1a2540]">
+                            <div
+                                className="h-60 w-60 aspect-square flex-shrink-0 flex items-center justify-center text-6xl font-bold text-white bg-gradient-to-br from-[#5d84ff] to-[#4d73ea] rounded-full">
                                 {player.firstName?.[0]}{player.lastName?.[0]}
                             </div>
                         )}
                     </div>
 
                     {/* Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e1c] via-[#0a0e1cee] to-transparent z-[1]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1c] to-transparent z-[1]" />
+                    {/*<div className="absolute inset-0 bg-gradient-to-r from-[#0a0e1c] via-[#0a0e1c] to-transparent z-[1]" />*/}
+                    {/*<div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1c] to-transparent z-[1]" />*/}
 
                     {/* Info */}
                     <div className="relative z-[2] p-8">
                         <div className="flex items-center gap-2 mb-3">
                             {player.team?.nbaTeamId && (
-                                <img src={logo(player.team.nbaTeamId)} alt="" className="w-6 h-6 object-contain !ml-3"
+                                <img src={logo(player.team.nbaTeamId)} alt="" className="w-40 h-40 object-contain !ml-3"
                                      onError={(e) => { e.target.style.display = "none"; }} />
                             )}
-                            <span className="text-[#4f7cff] text-xs font-semibold uppercase tracking-wider ">
+                            <span className="text-[#4f7cff] text-xsl font-semibold uppercase tracking-wider  ">
                 {player.team?.teamName ?? "—"}
               </span>
                         </div>
                         <h1 className="text-4xl font-bold text-white !mb-1 ml-3!">
                             {player.firstName} <span>{player.lastName}</span>
                         </h1>
-                        <p className="text-[#8bb5b4] text-sl !mb-5 ml-4!">
+                        <p className="text-[white] text-xl !mb-5 ml-4!">
                             {player.position ?? "—"} · #{player.jerseyNumber ?? "—"}
                         </p>
                     </div>
                 </div>
 
                 {/* ── Bio ── */}
-                <div className="border border-[#1a2540] bg-[#0a0e1c] p-6">
+                <div className="border border-[#1a2540] bg-[#0a0e1c] p-6 ">
                     <p className="text-[white] text-xs font-semibold uppercase tracking-widest !mb-4 !mt-3 !ml-2">Player Info</p>
-                    <div className="grid grid-cols-4 gap-4 !ml-4">
+                    <div className="grid grid-cols-4 gap-4 !ml-4 mb-4!">
                         {[
                             { l: "Position", v: player.position ?? "—" },
                             { l: "Height", v: player.height ?? "—" },
@@ -328,17 +329,17 @@ export default function PlayerDetailPage() {
                             { l: "Team", v: player.team?.teamName ?? "—" },
                             { l: "Conference", v: player.team?.conference ?? "—" },
                             { l: "Division", v: player.team?.division ?? "—" },
-                            { l: "Status", v: player.isActive ? "Not Active" : "Active" },
+                            { l: "Status", v: player.isActive ? "Active" : "Not Active" },
                         ].map((item) => (
                             <div key={item.l} className="py-2 border-b border-[#111825]">
-                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">{item.l}</p>
-                                <p className={`text-base font-semibold ${item.color ?? "text-white"}`}>{item.v}</p>
+                                <p className="text-[white] text-[10px] font-semibold uppercase tracking-wider mb-1!">{item.l}</p>
+                                <p className={`text-base font-bold ${item.color ?? "text-white mb-1! "}`}>{item.v}</p>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8">
+                <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8 ">
                     <div className="flex items-start justify-between gap-10 !mb-6 !mt-5 flex-wrap">
                         <div className="flex flex-col gap-3">
                             <p className="text-[white] text-xs font-semibold uppercase tracking-widest ml-4!">Recent Games Chart</p>
@@ -387,7 +388,7 @@ export default function PlayerDetailPage() {
                                 className="px-3 py-1.5 text-xs font-semibold border border-[white]! transition-colors  mr-4!"
                                 style={{
                                     background: chartType === "bar" ? "#4f7cff" : "transparent",
-                                    color: chartType === "bar" ? "#fff" : "#8bb5b4",
+                                    color: chartType === "bar" ? "#fff" : "#fff",
                                 }}
                             >
                                 Bar
@@ -422,7 +423,7 @@ export default function PlayerDetailPage() {
                             </div>
                         </div>
                     )}
-                    <div style={{ height: 320 }}>
+                    <div style={{ height: 320  }} className="mb-4! mt-4!">
                         {rawLoading ? (
                             <div className="flex items-center justify-center h-full">
                                 <div className="w-6 h-6 border-2 border-[#4f7cff] border-t-transparent rounded-full animate-spin" />

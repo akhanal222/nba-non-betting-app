@@ -132,6 +132,7 @@ export default function TeamPlayersPage() {
                                         weight: player.weight,
                                         jerseyNumber: player.jerseyNumber,
                                         nbaPlayerId: player.nbaPlayerId,
+                                        isActive: true,
                                         team: {
                                             teamId: team.teamId,
                                             teamName: team.teamName,
@@ -141,7 +142,6 @@ export default function TeamPlayersPage() {
                                             division: team.division,
                                             nbaTeamId:team.nbaTeamId,
                                         },
-                                        isActive: player.isActive ?? player.is_active,
                                     }}
                                     selected={false}
                                     onAnalyze={(p) => {
