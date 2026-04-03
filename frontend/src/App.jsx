@@ -255,7 +255,8 @@ export default function App() {
 
         {/* ── Player Search ── */}
         <main style={{ padding: "40px 0", textAlign: "left" }}>
-          <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: UI.textPrimary, marginBottom: 22, textAlign: "center"}}>
+          <h1 style={{
+            fontFamily: "'Outfit', sans-serif", fontSize: "1.9rem", fontWeight: 800, color: UI.textPrimary, marginBottom: 22, textAlign: "center"}}>
             Search Players
           </h1>
 

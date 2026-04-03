@@ -493,9 +493,9 @@ body {
     font-size: 11px;
     font-weight: 700;
     font-family: inherit;
-    border: 1px solid var(--border-default);
-    color: #ffd4c4;
-    background: var(--bg-surface-2);
+    border: 1px solid #f65454;
+    color: red;
+    background: rgba(232, 71, 71, 0.18);
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
@@ -531,7 +531,7 @@ body {
 .controls-line-input {
     width: 88px;
     padding: 10px 12px;
-    border-radius: 10px;
+    border-radius: 20px;
     border: 1px solid #9095b3;
     background: #0e1018;
     color: #e0e0e0;

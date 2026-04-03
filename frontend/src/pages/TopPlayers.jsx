@@ -217,7 +217,7 @@ export default function TopPlayers() {
                 imageUrl: player.nbaPlayerId
                     ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.nbaPlayerId}.png`
                     : null,
-                rank: "—",
+                rank: "_",
                 statistic: "—",
                 avgLast5: "—",
                 team: {
@@ -290,9 +290,10 @@ export default function TopPlayers() {
                     letterSpacing: "1px",
                     textTransform: "uppercase",
                     textAlign: "center",
-                    padding: "50px"
+                    padding: "50px",
+                    fontFamily: "'Outfit', sans-serif"
                 }}
-                >Top 20 players Last Season </h1>
+                >Top 20 Players Last Season </h1>
 
                 <div
                     style={{
