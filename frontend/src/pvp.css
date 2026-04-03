@@ -5,7 +5,7 @@
     align-items: center;
     gap: 1.5rem;
     padding: 2rem 1.5rem;
-    border-bottom: 1px solid #141d30;
+    border-bottom: 1px solid var(--border-default);
 }
 
 .pvp-vs-divider {
@@ -19,7 +19,7 @@
     font-size: 1.5rem;
     font-weight: 900;
     letter-spacing: -0.03em;
-    color: #1a2540;
+    color: var(--accent-soft);
 }
 
 /* ── Profile Card ──────────────────────────────────────────────────────────── */
@@ -28,8 +28,8 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    background: #0c1120;
-    border: 1.5px solid #ffffff;
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-default);
     border-radius: 16px;
     padding: 1.5rem 1.25rem;
 }
@@ -40,7 +40,7 @@
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid;
-    background: #0c1120;
+    background: var(--bg-surface-2);
     margin-bottom: 0.75rem;
     position: relative;
 }
@@ -60,19 +60,19 @@
     height: 100%;
     font-size: 1.25rem;
     font-weight: 700;
-    color: #1a2540;
+    color: var(--text-primary);
 }
 
 .pvp-profile__name {
     font-size: 1rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
     margin: 0;
 }
 
 .pvp-profile__meta {
     font-size: 14px;
-    color: #ffffff;
+    color: var(--text-secondary);
     margin-top: 4px;
 }
 
@@ -92,20 +92,20 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #ffffff;
+    color: var(--text-muted);
 }
 
 .pvp-profile__detail-value {
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
     margin-top: 4px;
 }
 
 .pvp-profile__college {
     font-size: 13px;
-    color: #ffffff;
+    color: var(--text-secondary);
     margin-top: 0.75rem;
 }
 
@@ -138,7 +138,7 @@
     flex: 1;
     height: 6px;
     border-radius: 3px;
-    background: #0c1120;
+    background: var(--bg-surface-2);
     overflow: hidden;
     position: relative;
 }
@@ -163,7 +163,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #ffffff;
+    color: var(--text-secondary);
     width: 2.5rem;
     text-align: center;
     flex-shrink: 0;

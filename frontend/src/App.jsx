@@ -12,6 +12,16 @@ const API = {
   completedGames: "http://localhost:8080/bdl/games/completed?days=2",
 };
 
+const UI = {
+  pageBg: "#0b1020",
+  surface: "#121a2e",
+  border: "#2c395c",
+  textPrimary: "#f4f7ff",
+  textSecondary: "#c4cee6",
+  textMuted: "#a5b2d1",
+  accent: "#5d84ff",
+};
+
 const NBA_ID_OVERRIDES = { UTA: 1610612762, NOP: 1610612740 };
 
 function teamLogoByAbbr(abbr) {
@@ -177,7 +187,7 @@ export default function App() {
   };
 
   return (
-      <div style={{ minHeight: "100vh", background: "#0a0c14", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: UI.pageBg, fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
         <NavBar activePage={activePage} setActivePage={setActivePage} teams={teams} onTeamClick={handleTeamClick} />
 
@@ -185,9 +195,9 @@ export default function App() {
         <section className="games-section">
           <h2>Upcoming Games</h2>
           {loadingUpcoming ? (
-              <p style={{ color: "#444", fontSize: "0.85rem" }}>Loading...</p>
+              <p style={{ color: UI.textSecondary, fontSize: "0.85rem" }}>Loading...</p>
           ) : upcomingGames.length === 0 ? (
-              <p style={{ color: "#444", fontSize: "0.85rem" }}>No upcoming games found.</p>
+              <p style={{ color: UI.textSecondary, fontSize: "0.85rem" }}>No upcoming games found.</p>
           ) : (
               <div className="games-scroll">
                 {upcomingGames.map((game, i) => (
@@ -221,9 +231,9 @@ export default function App() {
           </h2>
 
           {loadingCompleted ? (
-              <p style={{ color: "#444", fontSize: "0.85rem" }}>Loading...</p>
+              <p style={{ color: UI.textSecondary, fontSize: "0.85rem" }}>Loading...</p>
           ) : completedGames.length === 0 ? (
-              <p style={{ color: "#444", fontSize: "0.85rem" }}>No recent completed games.</p>
+              <p style={{ color: UI.textSecondary, fontSize: "0.85rem" }}>No recent completed games.</p>
           ) : (
               <div className="games-scroll">
                 {completedGames.map((game, i) => (
@@ -245,14 +255,15 @@ export default function App() {
 
         {/* ── Player Search ── */}
         <main style={{ padding: "40px 0", textAlign: "left" }}>
-          <h1 style={{ fontSize: "1.9rem", fontWeight: 800, color: "#fff", marginBottom: 22, textAlign: "center"}}>
+          <h1 style={{
+            fontFamily: "'Outfit', sans-serif", fontSize: "1.9rem", fontWeight: 800, color: UI.textPrimary, marginBottom: 22, textAlign: "center"}}>
             Search Players
           </h1>
 
           <div className="player-search-shell">
             <div style={{
               display: "flex", alignItems: "center",
-              background: "#111620", border: "1.5px solid #1e2333",
+              background: UI.surface, border: `1.5px solid ${UI.border}`,
               borderRadius: 10, padding: "0 16px",
             }}>
               <input
@@ -261,12 +272,12 @@ export default function App() {
                   onFocus={() => setShowSuggestions(suggestions.length > 0)}
                   onKeyDown={e => e.key === "Enter" && searchPlayers()}
                   placeholder="Search by player name...."
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#ccc", fontSize: "0.9rem", padding: "13px 0", fontFamily: "inherit" }}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: UI.textPrimary, fontSize: "0.9rem", padding: "13px 0", fontFamily: "inherit" }}
               />
               <button onClick={searchPlayers}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#555", display: "flex", alignItems: "center" }}
-                      onMouseEnter={e => e.currentTarget.style.color = "#4f7cff"}
-                      onMouseLeave={e => e.currentTarget.style.color = "#555"}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: UI.textMuted, display: "flex", alignItems: "center" }}
+                      onMouseEnter={e => e.currentTarget.style.color = UI.accent}
+                      onMouseLeave={e => e.currentTarget.style.color = UI.textMuted}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -296,10 +307,10 @@ export default function App() {
                             </span>
                           </div>
                           <div className="player-suggestion-copy">
-                            <span style={{ color: "#fff", fontWeight: 600 }}>
+                            <span style={{ color: UI.textPrimary, fontWeight: 600 }}>
                               {player.firstName} {player.lastName}
                             </span>
-                            <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                            <span style={{ color: UI.textSecondary, fontSize: "0.75rem" }}>
                               {player.team?.abbreviation ?? "—"} • {player.position ?? "—"}
                             </span>
                           </div>
@@ -311,7 +322,7 @@ export default function App() {
           </div>
 
           {loadingPlayers ? (
-              <p style={{ color: "#555", textAlign: "center" }}>Searching...</p>
+              <p style={{ color: UI.textSecondary, textAlign: "center" }}>Searching...</p>
           ) : filteredPlayers.length > 0 ? (
               <div className="player-grid">
                 {filteredPlayers.map(player => (
@@ -324,7 +335,7 @@ export default function App() {
                 ))}
               </div>
           ) : hasSearched ? (
-              <p style={{ color: "#444", textAlign: "center" }}>No players found.</p>
+              <p style={{ color: UI.textSecondary, textAlign: "center" }}>No players found.</p>
           ) : null}
         </main>
       </div>
@@ -349,7 +360,7 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
           style={{
             cursor: "pointer", position: "relative",
             border: `1.5px solid ${hovered ? `${badgeColor}50` : "transparent"}`,
-            background: hovered ? "#111620" : undefined,
+            background: hovered ? UI.surface : undefined,
             transform: hovered ? "translateY(-3px)" : "none",
             transition: "all 0.15s",
           }}
@@ -389,9 +400,9 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
           {showScore && homeScore != null && visitorScore != null ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 900, color: homeWon ? "#fff" : "#555" }}>{homeScore}</span>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 900, color: homeWon ? UI.textPrimary : UI.textMuted }}>{homeScore}</span>
                   <span style={{ fontSize: "0.65rem", color: "#333", fontWeight: 700 }}>—</span>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 900, color: visitorWon ? "#fff" : "#555" }}>{visitorScore}</span>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 900, color: visitorWon ? UI.textPrimary : UI.textMuted }}>{visitorScore}</span>
                 </div>
                 <span style={{ fontSize: "0.56rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Final</span>
               </div>

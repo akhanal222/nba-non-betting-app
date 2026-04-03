@@ -84,7 +84,7 @@ const NAV_ITEMS = ["Home", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
           style={{
             background: showTeams ? "#2a3be0" : "transparent",
             border: "3px solid #a9c1c4",
-            color: showTeams ? "#fff" : "#888",
+            color: showTeams ? "#fff" : "#f8f3f3",
             borderRadius: 8,
             padding: "5px 14px",
             fontSize: "0.8rem",

@@ -5,14 +5,38 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0c14;
+  color-scheme: dark;
+  color: #f4f7ff;
+  background-color: #0b1020;
+
+  --bg-page: #0b1020;
+  --bg-surface: #121a2e;
+  --bg-surface-2: #0f1629;
+  --border-default: #2c395c;
+  --text-primary: #f4f7ff;
+  --text-secondary: #c4cee6;
+  --text-muted: #a5b2d1;
+  --accent: #5d84ff;
+  --accent-soft: #9eb8ff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+input, button, textarea, select {
+  color: inherit;
 }
 /*
 a {

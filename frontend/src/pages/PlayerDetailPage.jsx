@@ -16,6 +16,8 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
+const RECENT_GAME_LIMITS = [5, 10, 15];
+
 const API = {
     playerStats: (id, limit) =>
         `http://localhost:8080/stats/player/external/${id}?limit=${limit}`,
@@ -179,7 +181,7 @@ function RawGameRow({ stat, index }) {
                 ].map((s) => (
                     <div key={s.l} className="text-center min-w-[32px]">
                         <p className="text-white text-sm font-semibold">{s.v}</p>
-                        <p className="text-[#8bb5b4] text-[10px] uppercase">{s.l}</p>
+                        <p className="text-[#ffffff] text-[10px] uppercase">{s.l}</p>
                     </div>
                 ))}
             </div>
@@ -201,6 +203,7 @@ export default function PlayerDetailPage() {
     const [analysisData, setAnalysisData] = useState(null);
     const [analysisLoading, setAnalysisLoading] = useState(false);
     const [statLine, setStatLine] = useState(15.5);
+    const [recentGamesLimit, setRecentGamesLimit] = useState(5);
     const [chartType, setChartType] = useState("line");
     const [imgErr, setImgErr] = useState(false);
 
@@ -217,12 +220,12 @@ export default function PlayerDetailPage() {
     useEffect(() => {
         if (!resolvedExternalApiId) return;
         setRawLoading(true);
-        fetch(API.playerStats(resolvedExternalApiId, 5))
+        fetch(API.playerStats(resolvedExternalApiId, recentGamesLimit))
             .then((r) => r.json())
             .then((d) => setRawStats(Array.isArray(d) ? d : []))
             .catch(() => setRawStats([]))
             .finally(() => setRawLoading(false));
-    }, [resolvedExternalApiId]);
+    }, [resolvedExternalApiId, recentGamesLimit]);
 
     useEffect(() => {
         if (!resolvedExternalApiId) return;
@@ -230,14 +233,14 @@ export default function PlayerDetailPage() {
         fetch(API.recentAnalyze({
             playerApiId: resolvedExternalApiId,
             statLine,
-            limit: 5,
+            limit: recentGamesLimit,
             statType: "pts",
         }))
             .then((r) => r.json())
             .then((data) => setAnalysisData(data))
             .catch(() => setAnalysisData(null))
             .finally(() => setAnalysisLoading(false));
-    }, [resolvedExternalApiId, statLine]);
+    }, [resolvedExternalApiId, statLine, recentGamesLimit]);
 
     const recentGamesChartData = buildRecentGamesChart(rawStats, statLine);
 
@@ -267,7 +270,7 @@ export default function PlayerDetailPage() {
 
                 {/* Back */}
                 <button onClick={() => navigate(-1)}
-                className="!bg-transparent flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] text-sm transition-colors w-fit">
+                className="bg-transparent! flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] text-sm transition-colors w-fit mt-10!">
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -297,17 +300,17 @@ export default function PlayerDetailPage() {
                     <div className="relative z-[2] p-8">
                         <div className="flex items-center gap-2 mb-3">
                             {player.team?.nbaTeamId && (
-                                <img src={logo(player.team.nbaTeamId)} alt="" className="w-6 h-6 object-contain"
+                                <img src={logo(player.team.nbaTeamId)} alt="" className="w-6 h-6 object-contain !ml-3"
                                      onError={(e) => { e.target.style.display = "none"; }} />
                             )}
-                            <span className="text-[#4f7cff] text-xs font-semibold uppercase tracking-wider">
+                            <span className="text-[#4f7cff] text-xs font-semibold uppercase tracking-wider ">
                 {player.team?.teamName ?? "—"}
               </span>
                         </div>
-                        <h1 className="text-4xl font-bold text-white mb-1">
+                        <h1 className="text-4xl font-bold text-white !mb-1 ml-3!">
                             {player.firstName} <span>{player.lastName}</span>
                         </h1>
-                        <p className="text-[#8bb5b4] text-sm">
+                        <p className="text-[#8bb5b4] text-sl !mb-5 ml-4!">
                             {player.position ?? "—"} · #{player.jerseyNumber ?? "—"}
                         </p>
                     </div>
@@ -315,8 +318,8 @@ export default function PlayerDetailPage() {
 
                 {/* ── Bio ── */}
                 <div className="border border-[#1a2540] bg-[#0a0e1c] p-6">
-                    <p className="text-[white] text-xs font-semibold uppercase tracking-widest mb-4">Player Info</p>
-                    <div className="grid grid-cols-4 gap-4">
+                    <p className="text-[white] text-xs font-semibold uppercase tracking-widest !mb-4 !mt-3 !ml-2">Player Info</p>
+                    <div className="grid grid-cols-4 gap-4 !ml-4">
                         {[
                             { l: "Position", v: player.position ?? "—" },
                             { l: "Height", v: player.height ?? "—" },
@@ -325,7 +328,7 @@ export default function PlayerDetailPage() {
                             { l: "Team", v: player.team?.teamName ?? "—" },
                             { l: "Conference", v: player.team?.conference ?? "—" },
                             { l: "Division", v: player.team?.division ?? "—" },
-                            { l: "Status", v: player.isActive ? "N/A" : "N/A" },
+                            { l: "Status", v: player.isActive ? "Not Active" : "Active" },
                         ].map((item) => (
                             <div key={item.l} className="py-2 border-b border-[#111825]">
                                 <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">{item.l}</p>
@@ -336,32 +339,52 @@ export default function PlayerDetailPage() {
                 </div>
 
                 <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8">
-                    <div className="flex items-center justify-between gap-4 mb-6">
-                        <p className="text-[white] text-xs font-semibold uppercase tracking-widest">Recent Games Chart</p>
+                    <div className="flex items-start justify-between gap-10 !mb-6 !mt-5 flex-wrap">
+                        <div className="flex flex-col gap-3">
+                            <p className="text-[white] text-xs font-semibold uppercase tracking-widest ml-4!">Recent Games Chart</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-[white] text-xs font-semibold uppercase tracking-widest ml-4!">Number of Games: </p>
+                                {RECENT_GAME_LIMITS.map((limit) => (
+                                    <button
+                                        key={limit}
+                                        type="button"
+                                        onClick={() => setRecentGamesLimit(limit)}
+                                        className="px-3 py-1.5 text-xs font-semibold border border-[#1a2540] transition-colors rounded-md"
+                                        style={{
+                                            background: recentGamesLimit === limit ? "#4f7cff" : "transparent",
+                                            color: recentGamesLimit === limit ? "#fff" : "#fff",
+                                            borderColor: recentGamesLimit === limit ? "#4f7cff" : "#1a2540",
+                                        }}
+                                    >
+                                        {limit}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                                <span className="text-[#8bb5b4] text-[10px] font-semibold uppercase tracking-wider">Stat Line</span>
+                                <span className="text-[white] text-[12px] font-bold uppercase tracking-wider">Stat Line</span>
                                 <input
                                     type="number"
                                     step="0.5"
                                     value={statLine}
                                     onChange={(e) => setStatLine(parseFloat(e.target.value) || " ")}
-                                    className="player-detail-line-input"
+                                    className="player-detail-line-input rounded-full "
                                 />
                             </div>
                             <button
                                 onClick={() => setChartType("line")}
-                                className="px-3 py-1.5 text-xs font-semibold border border-[#1a2540] transition-colors"
+                                className="px-3 py-1.5 text-xs font-semibold border border-[white]! transition-colors"
                                 style={{
                                     background: chartType === "line" ? "#4f7cff" : "transparent",
-                                    color: chartType === "line" ? "#fff" : "#8bb5b4",
+                                    color: chartType === "line" ? "#fff" : "#fff",
                                 }}
                             >
                                 Line
                             </button>
                             <button
                                 onClick={() => setChartType("bar")}
-                                className="px-3 py-1.5 text-xs font-semibold border border-[#1a2540] transition-colors"
+                                className="px-3 py-1.5 text-xs font-semibold border border-[white]! transition-colors  mr-4!"
                                 style={{
                                     background: chartType === "bar" ? "#4f7cff" : "transparent",
                                     color: chartType === "bar" ? "#fff" : "#8bb5b4",
@@ -378,23 +401,23 @@ export default function PlayerDetailPage() {
                     ) : analysisData && (
                         <div className="grid grid-cols-4 gap-4 mt-3 mb-6 pb-6 border-b border-[#111825]">
                             <div className="py-2">
-                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Avg PTS</p>
-                                <p className="text-base font-semibold text-white">{analysisData.average ?? "—"}</p>
+                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Avg PTS</p>
+                                <p className="text-base font-semibold text-white mb-1! ml-2!">{analysisData.average ?? "—"}</p>
                             </div>
                             <div className="py-2">
-                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Hit Rate</p>
-                                <p className="text-base font-semibold text-white">
+                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Hit Rate</p>
+                                <p className="text-base font-semibold text-white mr-5!">
                                     {typeof analysisData.hitRate === "number" ? `${Math.round(analysisData.hitRate * 100)}%` : "—"}
                                 </p>
                             </div>
                             <div className="py-2">
-                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Hit Count</p>
+                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Hit Count</p>
                                 <p className="text-base font-semibold text-white">
                                     {analysisData.hitCount ?? "—"}/{analysisData.totalGames ?? "—"}
                                 </p>
                             </div>
                             <div className="py-2">
-                                <p className="text-[#8bb5b4] text-[10px] uppercase tracking-wider mb-1">Std Dev</p>
+                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Std Dev</p>
                                 <p className="text-base font-semibold text-white">{analysisData.standardDeviation ?? "—"}</p>
                             </div>
                         </div>
@@ -417,7 +440,7 @@ export default function PlayerDetailPage() {
                 {/* ── Recent Games ── */}
                 <div className="border border-[#1a2540] bg-[#0a0e1c] overflow-hidden">
                     <div className="px-10 py-8 border-b border-[#111825]">
-                        <p className="text-[white] text-xs font-semibold uppercase tracking-widest">Recent Games</p>
+                        <p className="text-[white] text-xs font-semibold uppercase tracking-widest mt-5! mb-4! ml-2!">Recent Games</p>
                     </div>
                     <div className="p-10 flex flex-col gap-5">
                         {rawLoading ? (

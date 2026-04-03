@@ -8,7 +8,7 @@
 }
 
 body {
-    background: #0b0d11;
+    background: var(--bg-page);
     font-family: inherit;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
@@ -46,8 +46,8 @@ body {
 /* ── Page Layout ───────────────────────────────────────────────────────────── */
 .matchups-page {
     min-height: 100vh;
-    background: #0a0c14;
-    color: #e0e0e0;
+    background: var(--bg-page);
+    color: var(--text-primary);
     font-family: inherit;
     font-style: normal;
 }
@@ -94,7 +94,7 @@ body {
     font-weight: 600;
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    color: #3a4565;
+    color: var(--text-muted);
     margin-bottom: 8px;
 }
 
@@ -102,19 +102,19 @@ body {
     font-size: 48px;
     font-weight: 400;
     font-family: inherit;
-    color: #f0f0f0;
+    color: var(--text-primary);
     line-height: 1.1;
     letter-spacing: -0.02em;
 }
 
 .matchups-header__title em {
-    color: #f0f0f0;
+    color: var(--text-primary);
     font-style: normal;
 }
 
 .matchups-header__subtitle {
     font-size: 14px;
-    color: #3a4565;
+    color: var(--text-secondary);
     margin-top: 8px;
     max-width: 400px;
     margin-left: auto;
@@ -159,8 +159,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #10131b;
-    border: 1px solid #ffffff;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
     border-radius: 14px;
     padding: 14px 18px;
     height: 68px;
@@ -216,7 +216,7 @@ body {
 }
 
 .search-info__name {
-    color: #f0f0f0;
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 14px;
     white-space: nowrap;
@@ -225,7 +225,7 @@ body {
 }
 
 .search-info__meta {
-    color: #5a6178;
+    color: var(--text-secondary);
     font-size: 11px;
     margin-top: 1px;
 }
@@ -235,9 +235,9 @@ body {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    border: 1px solid #e86347;
+    border: 1px solid #ff8b72;
     background: transparent;
-    color: #e86347;
+    color: #ff9a84;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -248,8 +248,9 @@ body {
 }
 
 .search-clear-btn:hover {
-    border-color: #e86347;
-    color: #e86347;
+    border-color: #ffb3a3;
+    color: #ffd7cf;
+    background: rgba(255, 122, 89, 0.14);
 }
 
 /* Input bar */
@@ -426,9 +427,16 @@ body {
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid #95a3c7;
-    color: #9095b3;
-    background: transparent;
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    background: var(--bg-surface-2);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.controls-stat-pill:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    transform: translateY(-1px);
 }
 
 /* Games selector */
@@ -458,18 +466,24 @@ body {
     border-radius: 10px;
     font-size: 13px;
     font-weight: 700;
-    border: 1px solid #95a3c7;
-    color: #9095b3;
-    background: transparent;
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    background: var(--bg-surface-2);
     cursor: pointer;
     transition: all 0.2s;
     text-align: center;
 }
 
 .controls-game-btn--active {
-    color: #e0e0e0;
-    background: #141a28;
-    border-color: #479de840;
+    color: var(--text-primary);
+    background: rgba(93, 132, 255, 0.22);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(93, 132, 255, 0.3), 0 6px 18px rgba(11, 17, 35, 0.45);
+}
+
+.controls-game-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
 }
 
 /* Playoff toggle */
@@ -479,18 +493,24 @@ body {
     font-size: 11px;
     font-weight: 700;
     font-family: inherit;
-    border: 1px solid #95a3c7;
-    color: #cc5555;
-    background: transparent;
+    border: 1px solid #f65454;
+    color: red;
+    background: rgba(232, 71, 71, 0.18);
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
 }
 
+.controls-playoff-btn:hover {
+    border-color: #ffd4c4;
+    color: #ffd7cf;
+}
+
 .controls-playoff-btn--active {
     color: #47e897;
-    background: rgba(71,232,151,0.08);
-    border-color: #47e89740;
+    background: rgba(71, 232, 151, 0.18);
+    border-color: #47e897;
+    box-shadow: 0 0 0 1px rgba(71, 232, 151, 0.28), 0 8px 20px rgba(7, 20, 15, 0.45);
 }
 
 .controls-line-group {
@@ -511,7 +531,7 @@ body {
 .controls-line-input {
     width: 88px;
     padding: 10px 12px;
-    border-radius: 10px;
+    border-radius: 20px;
     border: 1px solid #9095b3;
     background: #0e1018;
     color: #e0e0e0;
@@ -538,20 +558,35 @@ body {
     border: none;
     transition: all 0.25s;
     cursor: pointer;
+    position: relative;
 }
 
 .controls-analyze-btn--ready {
-    background: #d4a830;
-    color: #0b0d11;
-    box-shadow: none;
+    background: linear-gradient(135deg, #6a8fff 0%, #5d84ff 52%, #4d73ea 100%);
+    color: #f8fbff;
+    box-shadow: 0 10px 26px rgba(25, 54, 153, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.controls-analyze-btn--ready:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(25, 54, 153, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .controls-analyze-btn--disabled {
     background: #0e1018;
-    color: #95a3c7;
+    color: var(--text-muted);
     cursor: not-allowed;
-    border: 2px solid #b1b18c;
+    border: 1px solid var(--border-default);
 
+}
+
+.search-clear-btn:focus-visible,
+.controls-stat-pill:focus-visible,
+.controls-game-btn:focus-visible,
+.controls-playoff-btn:focus-visible,
+.controls-analyze-btn:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 2px;
 }
 
 .controls-analyze-spinner {
@@ -709,12 +744,12 @@ body {
 .results-header__matchup-title {
     font-family: inherit;
     font-size: 20px;
-    color: #f0f0f0;
+    color: var(--text-primary);
     line-height: 1.2;
 }
 
 .results-header__vs {
-    color: #ffffff;
+    color: var(--text-secondary);
     font-size: 14px;
     margin: 0 8px;
     font-family: inherit;
@@ -722,11 +757,11 @@ body {
 }
 
 .results-header__opponent {
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
 .results-header__meta {
-    color: #ffffff;
+    color: var(--text-secondary);
     font-size: 12px;
     font-family: inherit;
     margin-top: 4px;
@@ -757,7 +792,7 @@ body {
 .results-hitrate__label {
     font-size: 9px;
     font-family: inherit;
-    color: #ffffff;
+    color: var(--text-secondary);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-top: 2px;
@@ -776,13 +811,13 @@ body {
 }
 
 .results-chart__title {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 15px;
     font-weight: 700;
 }
 
 .results-chart__subtitle {
-    color: #ffffff;
+    color: var(--text-secondary);
     font-size: 12px;
     margin-top: 4px;
 }
@@ -849,7 +884,7 @@ body {
 }
 
 .result-row__date {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 13px;
     font-family: inherit;
     width: 110px;
@@ -893,7 +928,7 @@ body {
     font-weight: 700;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #ffffff;
+    color: var(--text-secondary);
     font-family: inherit;
 }
 
@@ -906,14 +941,14 @@ body {
 
 .result-row__line-label {
     font-size: 9px;
-    color: #ffffff;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-family: inherit;
 }
 
 .result-row__line-value {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;
@@ -935,4 +970,29 @@ body {
 .result-row__indicator--miss {
     background: #e86347;
     /* box-shadow: 0 0 12px rgba(232,99,71,0.3); */
+}
+
+/* High-contrast overrides for shared matchup components */
+.search-input-bar,
+.search-dropdown,
+.search-dropdown__item,
+.results-shell,
+.results-chart,
+.results-hitrate {
+    border-color: var(--border-default);
+}
+
+.search-input-bar,
+.results-chart,
+.results-hitrate,
+.results-shell {
+    background: var(--bg-surface);
+}
+
+.search-input,
+.search-placeholder,
+.results-loading__text,
+.results-games__empty,
+.results-header__meta {
+    color: var(--text-secondary);
 }

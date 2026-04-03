@@ -139,6 +139,7 @@ export default function TeamPlayersPage() {
                                             city: team.city,
                                             conference: team.conference,
                                             division: team.division,
+                                            nbaTeamId:team.nbaTeamId,
                                         },
                                         isActive: player.isActive ?? player.is_active,
                                     }}
