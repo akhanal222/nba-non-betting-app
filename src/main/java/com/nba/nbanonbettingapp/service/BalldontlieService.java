@@ -10,6 +10,7 @@ import com.nba.nbanonbettingapp.dto.BdlResponseDTO;
 import com.nba.nbanonbettingapp.dto.BdlStatDTO;
 import com.nba.nbanonbettingapp.dto.PlayerWithImageDTO;
 import com.nba.nbanonbettingapp.dto.BdlSeasonAverageDTO;
+import com.nba.nbanonbettingapp.dto.BdlAdvancedStatsDTO;
 import com.nba.nbanonbettingapp.entity.NbaPlayerLookup;
 import com.nba.nbanonbettingapp.repository.NbaPlayerLookupRepository;
 import org.springframework.core.ParameterizedTypeReference;
@@ -27,14 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class BalldontlieService {
 
     private final RestClient client;
+    private final RestClient rootClient;
     private final NbaPlayerLookupRepository nbaLookupRepository;
     private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
 
     public BalldontlieService(RestClient balldontlieRestClient,
-                              NbaPlayerLookupRepository nbaLookupRepository,GameRepository gameRepository,
+                              RestClient balldontlieRootClient,
+                              NbaPlayerLookupRepository nbaLookupRepository,
+                              GameRepository gameRepository,
                               TeamRepository teamRepository) {
         this.client = balldontlieRestClient;
+        this.rootClient = balldontlieRootClient;
         this.nbaLookupRepository = nbaLookupRepository;
         this.gameRepository = gameRepository;
         this.teamRepository = teamRepository;
@@ -170,7 +175,62 @@ public class BalldontlieService {
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
+    /**
+     * Fetches advanced stats from the v2 endpoint for a specific player and game list.
+     *
+     * @param playerApiId BallDontLie player ID
+     * @param gameIds     List of BDL game IDs
+     * @param cursor      Pagination cursor, null for first page
+     */
+    public BdlResponseDTO<BdlAdvancedStatsDTO> getAdvancedStatsByPlayerAndGamesV2(
+            Long playerApiId, List<Long> gameIds, Integer cursor) {
 
+        return rootClient.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/nba/v2/stats/advanced")
+                            .queryParam("player_ids[]", playerApiId)
+                            .queryParam("per_page", 100);
+
+                    for (Long gameId : gameIds) {
+                        builder = builder.queryParam("game_ids[]", gameId);
+                    }
+                    if (cursor != null) {
+                        builder = builder.queryParam("cursor", cursor);
+                    }
+                    return builder.build();
+                })
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+    /**
+     * Fetches advanced stats from the v1 endpoint for a specific player and game list.
+     *
+     * @param playerApiId BallDontLie player ID
+     * @param gameIds     List of BDL game IDs
+     * @param cursor      Pagination cursor, null for first page
+     */
+    public BdlResponseDTO<BdlAdvancedStatsDTO> getAdvancedStatsByPlayerAndGamesV1(
+            Long playerApiId, List<Long> gameIds, Integer cursor) {
+
+        return rootClient.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/nba/v1/stats/advanced")
+                            .queryParam("player_ids[]", playerApiId)
+                            .queryParam("per_page", 100);
+
+                    for (Long gameId : gameIds) {
+                        builder = builder.queryParam("game_ids[]", gameId);
+                    }
+                    if (cursor != null) {
+                        builder = builder.queryParam("cursor", cursor);
+                    }
+                    return builder.build();
+                })
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
     /**
      * Fetches a single team by its BallDontLie team ID.
      */

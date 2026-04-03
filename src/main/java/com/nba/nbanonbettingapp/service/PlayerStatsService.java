@@ -28,17 +28,23 @@ public class PlayerStatsService {
     private final GameRepository gameRepository;
     private final PlayerGameStatisticRepository statRepository;
     private final BalldontlieService balldontlieService;
+    private final AdvancedStatsIngestionService advancedStatsIngestionService;
+    private final EWMACalculatorService ewmaCalculatorService;
 
     public PlayerStatsService(PlayerRepository playerRepository,
                               TeamRepository teamRepository,
                               GameRepository gameRepository,
                               PlayerGameStatisticRepository statRepository,
-                              BalldontlieService balldontlieService) {
+                              BalldontlieService balldontlieService,
+                              AdvancedStatsIngestionService advancedStatsIngestionService,
+                              EWMACalculatorService ewmaCalculatorService) {
         this.playerRepository = playerRepository;
         this.teamRepository = teamRepository;
         this.gameRepository = gameRepository;
         this.statRepository = statRepository;
         this.balldontlieService = balldontlieService;
+        this.advancedStatsIngestionService = advancedStatsIngestionService;
+        this.ewmaCalculatorService = ewmaCalculatorService;
     }
 
     /**
@@ -78,6 +84,7 @@ public class PlayerStatsService {
 
         // If stats are fresh AND we already have enough rows, return DB
         if (!stale && db.size() >= limit) {
+            triggerAdvancedStatsHook(playerId, db);
             return db;
         }
 
@@ -162,13 +169,39 @@ public class PlayerStatsService {
 
             statRepository.save(stat);
         }
+        // Collects the external game IDs from the box score rows we stored above,
+        // then asks AdvancedStatsIngestionService to fetch USG%, TS%, pace, ratings, PIE
+        // for those same games.
+        List<Long> upsertedGameIds = sorted.stream()
+                .filter(s -> s.game() != null && s.game().id() != null)
+                .map(s -> s.game().id().longValue())
+                .distinct()
+                .toList();
+
+        advancedStatsIngestionService.fetchAndUpsert(player.getExternalApiId(), upsertedGameIds);
 
         // Return again from DB
         return statRepository.findByPlayer_PlayerIdOrderByGame_GameDateDesc(
                 playerId, PageRequest.of(0, limit)
         );
     }
+    /**
+     * Extracts external game IDs from a stat list and fires the advanced stats ingestion
+     */
+    private void triggerAdvancedStatsHook(Long playerId, List<PlayerGameStatistic> stats) {
+        Player player = playerRepository.findById(playerId).orElse(null);
+        if (player == null) return;
 
+        List<Long> gameExternalIds = stats.stream()
+                .filter(s -> s.getGame() != null && s.getGame().getExternalApiId() != null)
+                .map(s -> s.getGame().getExternalApiId())
+                .distinct()
+                .toList();
+
+        advancedStatsIngestionService.fetchAndUpsert(player.getExternalApiId(), gameExternalIds);
+
+        ewmaCalculatorService.forceRecompute(player.getExternalApiId());
+    }
     /**
      * Analyzes a player's recent N games and computes prop analytics.
      *
