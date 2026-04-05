@@ -284,16 +284,16 @@ export default function TopPlayers() {
             <div style={{ padding: "40px", alignContent: "center" }}>
 
                 <h1 style={{
-                    color: UI.textPrimary,
-                    fontSize: "36px",
-                    fontWeight: "bold",
+                    color: "#a5b2d1",
+                    fontSize: "30px",
                     letterSpacing: "1px",
+                    fontweight: "600",
                     textTransform: "uppercase",
                     textAlign: "center",
                     padding: "50px",
                     fontFamily: "'Outfit', sans-serif"
                 }}
-                >Top 20 Players Last Season </h1>
+                >Top Players Last Season </h1>
 
                 <div
                     style={{

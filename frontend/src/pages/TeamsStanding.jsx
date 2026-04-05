@@ -198,7 +198,7 @@ export default function NBAStandings() {
     return (
         <div style={{
             minHeight: "100vh",
-            background: "#0a0c14",
+            background: "#0b1020",
             color: "#e6edf3",
             fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
         }}>

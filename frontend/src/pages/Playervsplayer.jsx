@@ -127,9 +127,11 @@ function CompPlayerSearch({ player, onSelect, onClear, label, excludeId }) {
                 {player ? (
                     <div className="search-selected">
                         <div className="search-avatar">
-                            <span className="search-avatar__initials">
-                                {player.firstName?.[0]}{player.lastName?.[0]}
-                            </span>
+                            {!player.nbaPlayerId && (
+                                <span className="search-avatar__initials">
+                                    {player.firstName?.[0]}{player.lastName?.[0]}
+                                </span>
+                            )}
                             {player.nbaPlayerId && (
                                 <img src={playerHeadshot(player.nbaPlayerId)} alt=""
                                      className="search-avatar__img"
@@ -162,9 +164,11 @@ function CompPlayerSearch({ player, onSelect, onClear, label, excludeId }) {
                         {results.map((p) => (
                             <button key={p.externalApiId ?? p.playerId} onClick={() => pick(p)} className="search-dropdown__item">
                                 <div className="search-avatar search-avatar--sm">
-                                    <span className="search-avatar__initials">
-                                        {p.firstName?.[0]}{p.lastName?.[0]}
-                                    </span>
+                                    {!p.nbaPlayerId && (
+                                        <span className="search-avatar__initials">
+                                            {p.firstName?.[0]}{p.lastName?.[0]}
+                                        </span>
+                                    )}
                                     {p.nbaPlayerId && (
                                         <img src={playerHeadshot(p.nbaPlayerId)} alt=""
                                              className="search-avatar__img"
@@ -354,13 +358,9 @@ export default function PlayerVsPlayer() {
         <>
             {/* ── Header ── */}
             <header className="matchups-header">
-                <p className="matchups-header__eyebrow">Player Analytics</p>
-                <h1 className="matchups-header__title">
+                <h1 className="matchups-header__eyebrow">
                     Player <em>Comparison</em>
                 </h1>
-                <p className="matchups-header__subtitle">
-                    Compare stats head-to-head between two players
-                </p>
             </header>
 
             {/* ── Search Row ── */}
@@ -419,7 +419,6 @@ export default function PlayerVsPlayer() {
                         <p className="results-empty__title">
                             {!canCompare ? "Select two players to compare" : "Press Compare to run"}
                         </p>
-                        <p className="results-empty__subtitle">Season & career averages</p>
                     </div>
                 )}
 

@@ -74,7 +74,7 @@ export default function GameLineupPage() {
     const showLineups = lineups.length > 0;
 
     return (
-        <div style={{ minHeight: "100vh", background: "#0a0c14", fontFamily: "system-ui, -apple-system, sans-serif", color: "#fff" }}>
+        <div style={{ minHeight: "100vh", background: "#0b1020", fontFamily: "system-ui, -apple-system, sans-serif", color: "#fff" }}>
 
             {/* ── Nav ── */}
             <nav style={s.nav}>
@@ -372,7 +372,7 @@ function logoUrl(abbr) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = {
-    centered: { minHeight: "100vh", background: "#0a0c14", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 },
+    centered: { minHeight: "100vh", background: "#0b1020", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 },
     nav: {
         position: "sticky", top: 0, zIndex: 100,
         background: "rgba(10,12,20,0.95)", backdropFilter: "blur(14px)",

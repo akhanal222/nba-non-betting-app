@@ -202,6 +202,8 @@ export default function PlayerDetailPage() {
     const [rawLoading, setRawLoading] = useState(false);
     const [analysisData, setAnalysisData] = useState(null);
     const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [rawStatsCache, setRawStatsCache] = useState({});
+    const [analysisCache, setAnalysisCache] = useState({});
     const [statLine, setStatLine] = useState(15.5);
     const [recentGamesLimit, setRecentGamesLimit] = useState(5);
     const [chartType, setChartType] = useState("line");
@@ -218,17 +220,47 @@ export default function PlayerDetailPage() {
     }, []);
 
     useEffect(() => {
-        if (!resolvedExternalApiId) return;
-        setRawLoading(true);
-        fetch(API.playerStats(resolvedExternalApiId, recentGamesLimit))
-            .then((r) => r.json())
-            .then((d) => setRawStats(Array.isArray(d) ? d : []))
-            .catch(() => setRawStats([]))
-            .finally(() => setRawLoading(false));
-    }, [resolvedExternalApiId, recentGamesLimit]);
+        setRawStatsCache({});
+        setAnalysisCache({});
+        setRawStats([]);
+        setAnalysisData(null);
+    }, [resolvedExternalApiId]);
 
     useEffect(() => {
         if (!resolvedExternalApiId) return;
+        const cacheKey = `${resolvedExternalApiId}-${recentGamesLimit}`;
+
+        if (cacheKey in rawStatsCache) {
+            setRawStats(rawStatsCache[cacheKey]);
+            setRawLoading(false);
+            return;
+        }
+
+        setRawLoading(true);
+        fetch(API.playerStats(resolvedExternalApiId, recentGamesLimit))
+            .then((r) => r.json())
+            .then((d) => {
+                const nextStats = Array.isArray(d) ? d : [];
+                setRawStats(nextStats);
+                setRawStatsCache((prev) => ({ ...prev, [cacheKey]: nextStats }));
+            })
+            .catch(() => {
+                setRawStats([]);
+                setRawStatsCache((prev) => ({ ...prev, [cacheKey]: [] }));
+            })
+            .finally(() => setRawLoading(false));
+    }, [resolvedExternalApiId, recentGamesLimit, rawStatsCache]);
+
+    useEffect(() => {
+        if (!resolvedExternalApiId) return;
+        const cacheKey = `${resolvedExternalApiId}-${recentGamesLimit}-${statLine}`;
+
+        if (cacheKey in analysisCache) {
+            setAnalysisData(analysisCache[cacheKey]);
+            setAnalysisLoading(false);
+            return;
+        }
+
         setAnalysisLoading(true);
         fetch(API.recentAnalyze({
             playerApiId: resolvedExternalApiId,
@@ -237,10 +269,16 @@ export default function PlayerDetailPage() {
             statType: "pts",
         }))
             .then((r) => r.json())
-            .then((data) => setAnalysisData(data))
-            .catch(() => setAnalysisData(null))
+            .then((data) => {
+                setAnalysisData(data);
+                setAnalysisCache((prev) => ({ ...prev, [cacheKey]: data }));
+            })
+            .catch(() => {
+                setAnalysisData(null);
+                setAnalysisCache((prev) => ({ ...prev, [cacheKey]: null }));
+            })
             .finally(() => setAnalysisLoading(false));
-    }, [resolvedExternalApiId, statLine, recentGamesLimit]);
+    }, [resolvedExternalApiId, statLine, recentGamesLimit, analysisCache]);
 
     const recentGamesChartData = buildRecentGamesChart(rawStats, statLine);
 
@@ -278,7 +316,7 @@ export default function PlayerDetailPage() {
                 </button>
 
                 {/* ── Hero ── */}
-                <div className="relative overflow-hidden border border-[#1a2540] bg-[#0a0e1c] min-h-[280px] flex items-end">
+                <div className="relative overflow-hidden border border-[#1a2540] bg-[#0a0e1c] min-h-[280px] flex items-end rounded-[20px]">
                     {/* Headshot */}
                     <div className="absolute right-0 bottom-0 w-[340px] h-full">
                         {!imgErr && player.nbaPlayerId ? (
@@ -318,7 +356,7 @@ export default function PlayerDetailPage() {
                 </div>
 
                 {/* ── Bio ── */}
-                <div className="border border-[#1a2540] bg-[#0a0e1c] p-6 ">
+                <div className="border border-[#1a2540] bg-[#0a0e1c] p-6 rounded-[20px] overflow-hidden">
                     <p className="text-[white] text-xs font-semibold uppercase tracking-widest !mb-4 !mt-3 !ml-2">Player Info</p>
                     <div className="grid grid-cols-4 gap-4 !ml-4 mb-4!">
                         {[
@@ -339,7 +377,7 @@ export default function PlayerDetailPage() {
                     </div>
                 </div>
 
-                <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8 ">
+                <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8 rounded-[20px] overflow-hidden">
                     <div className="flex items-start justify-between gap-10 !mb-6 !mt-5 flex-wrap">
                         <div className="flex flex-col gap-3">
                             <p className="text-[white] text-xs font-semibold uppercase tracking-widest ml-4!">Recent Games Chart</p>
@@ -439,7 +477,7 @@ export default function PlayerDetailPage() {
                 </div>
 
                 {/* ── Recent Games ── */}
-                <div className="border border-[#1a2540] bg-[#0a0e1c] overflow-hidden">
+                <div className="border border-[#1a2540] bg-[#0a0e1c] rounded-[20px] overflow-hidden">
                     <div className="px-10 py-8 border-b border-[#111825]">
                         <p className="text-[white] text-xs font-semibold uppercase tracking-widest mt-5! mb-4! ml-2!">Recent Games</p>
                     </div>

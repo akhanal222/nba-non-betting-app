@@ -351,6 +351,7 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
   const homeWon     = showScore && homeScore != null && visitorScore != null && homeScore > visitorScore;
   const visitorWon  = showScore && homeScore != null && visitorScore != null && visitorScore > homeScore;
   const gameTime = formatGameTime(game.status);
+  const isLive = gameTime === "Live";
   return (
       <div
           className="game-card"
@@ -382,7 +383,12 @@ function GameCard({ game, hovered, onHover, onLeave, onClick, badge, badgeColor,
 
         {!showScore && (
             <>
-              <div className="game-date">{gameTime}</div>
+              <div
+                className="game-date"
+                style={isLive ? { color: "#22c55e", fontWeight: 700 } : undefined}
+              >
+                {gameTime}
+              </div>
             </>
         )}
 
