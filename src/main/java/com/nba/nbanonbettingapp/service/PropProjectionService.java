@@ -161,8 +161,15 @@ public class PropProjectionService {
             case BLK      -> ewma.blkPerMin()  != null ? ewma.blkPerMin()  : 0.0;
             case FG3M     -> ewma.fg3mPerMin() != null ? ewma.fg3mPerMin() : 0.0;
             case TURNOVER -> ewma.tovPerMin()  != null ? ewma.tovPerMin()  : 0.0;
+            // Combos: sum the component per-minute rates
+            case PR  -> safe(ewma.ptsPerMin())  + safe(ewma.rebPerMin());
+            case PA  -> safe(ewma.ptsPerMin())  + safe(ewma.astPerMin());
+            case RA  -> safe(ewma.rebPerMin())  + safe(ewma.astPerMin());
+            case PRA -> safe(ewma.ptsPerMin())  + safe(ewma.rebPerMin()) + safe(ewma.astPerMin());
         };
     }
+
+    private double safe(Double v) { return v != null ? v : 0.0; }
 
     /**
      * Pace adjustment.
@@ -176,11 +183,29 @@ public class PropProjectionService {
         return Math.min(1.15, Math.max(0.85, adj));
     }
 
+    private double computeOpponentAdjustment(Long opponentTeamApiId,
+                                             String playerPosition,
+                                             StatType stat) {
+        if (stat.isCombo()) {
+            List<StatType> components = switch (stat) {
+                case PR  -> List.of(StatType.PTS, StatType.REB);
+                case PA  -> List.of(StatType.PTS, StatType.AST);
+                case RA  -> List.of(StatType.REB, StatType.AST);
+                case PRA -> List.of(StatType.PTS, StatType.REB, StatType.AST);
+                default  -> List.of(stat);
+            };
+            return components.stream()
+                    .mapToDouble(c -> computeSingleOpponentAdjustment(opponentTeamApiId, playerPosition, c))
+                    .average()
+                    .orElse(1.0);
+        }
+        return computeSingleOpponentAdjustment(opponentTeamApiId, playerPosition, stat);
+    }
     /**
      * Opponent adjustment — how much this team allows to this position vs league average.
      * Formula: 1 + (leagueAvgAllowed - teamAllowed) / leagueAvgAllowed
      */
-    private double computeOpponentAdjustment(Long opponentTeamApiId,
+    private double computeSingleOpponentAdjustment(Long opponentTeamApiId,
                                              String playerPosition,
                                              StatType stat) {
         if (opponentTeamApiId == null || playerPosition == null) return 1.0;
@@ -263,12 +288,32 @@ public class PropProjectionService {
         return 1.00;                    // normal 1-day rest
     }
 
+    private double computeStdDev(Player player, StatType statType) {
+        if (statType.isCombo()) {
+            // Combine individual stdDevs: sqrt(σ_a² + σ_b² + ...)
+            List<StatType> components = switch (statType) {
+                case PR  -> List.of(StatType.PTS, StatType.REB);
+                case PA  -> List.of(StatType.PTS, StatType.AST);
+                case RA  -> List.of(StatType.REB, StatType.AST);
+                case PRA -> List.of(StatType.PTS, StatType.REB, StatType.AST);
+                default  -> List.of(statType);
+            };
+            double sumOfSquares = components.stream()
+                    .mapToDouble(c -> {
+                        double sd = computeSingleStdDev(player, c);
+                        return sd * sd;
+                    })
+                    .sum();
+            return Math.max(MIN_STD_DEV, Math.sqrt(sumOfSquares));
+        }
+        return computeSingleStdDev(player, statType);
+    }
     /**
      * Computes historical standard deviation for this stat
      * from the player's last 20 qualifying games.
      * Used as σ in the probability distribution.
      */
-    private double computeStdDev(Player player, StatType stat) {
+    private double computeSingleStdDev(Player player, StatType stat) {
         List<PlayerGameStatistic> recent = statRepository
                 .findByPlayer_PlayerIdOrderByGame_GameDateDesc(
                         player.getPlayerId(), PageRequest.of(0, 20));
@@ -298,12 +343,12 @@ public class PropProjectionService {
     /**
      * Converts the projected value to over/under probabilities.
      */
-    private double[] computeProbabilities(StatType stat, double projectedValue,
+    private double[] computeProbabilities(StatType statType, double projectedValue,
                                           double stdDev, double line) {
         if (projectedValue <= 0) return new double[]{0.5, 0.5};
 
         try {
-            if (stat == StatType.PTS) {
+            if (statType == StatType.PTS || statType.isCombo()) {
                 // Points: Normal distribution
                 NormalDistribution nd = new NormalDistribution(projectedValue, stdDev);
                 double overProb  = 1.0 - nd.cumulativeProbability(line);
@@ -329,7 +374,7 @@ public class PropProjectionService {
             return new double[]{0.5, 0.5};
         }
     }
-    
+
 
     private int extractStatValue(PlayerGameStatistic s, StatType stat) {
         return switch (stat) {
@@ -340,6 +385,15 @@ public class PropProjectionService {
             case BLK      -> s.getBlocks()              != null ? s.getBlocks()              : 0;
             case FG3M     -> s.getThreePointShotsMade() != null ? s.getThreePointShotsMade() : 0;
             case TURNOVER -> s.getTurnovers()           != null ? s.getTurnovers()           : 0;
+            case PR  -> (s.getPointsScored()  != null ? s.getPointsScored()  : 0)
+                    + (s.getTotalRebounds() != null ? s.getTotalRebounds() : 0);
+            case PA  -> (s.getPointsScored()  != null ? s.getPointsScored()  : 0)
+                    + (s.getAssists()       != null ? s.getAssists()       : 0);
+            case RA  -> (s.getTotalRebounds() != null ? s.getTotalRebounds() : 0)
+                    + (s.getAssists()       != null ? s.getAssists()       : 0);
+            case PRA -> (s.getPointsScored()  != null ? s.getPointsScored()  : 0)
+                    + (s.getTotalRebounds() != null ? s.getTotalRebounds() : 0)
+                    + (s.getAssists()       != null ? s.getAssists()       : 0);
         };
     }
 
@@ -352,6 +406,8 @@ public class PropProjectionService {
             case BLK      -> dvp.getBlkAllowed()  != null ? dvp.getBlkAllowed()  : 0.0;
             case FG3M     -> dvp.getFg3mAllowed() != null ? dvp.getFg3mAllowed() : 0.0;
             case TURNOVER -> dvp.getTovAllowed()  != null ? dvp.getTovAllowed()  : 0.0;
+            // Combos are decomposed before this method is called — should never reach here
+            case PR, PA, RA, PRA -> 0.0;
         };
     }
 

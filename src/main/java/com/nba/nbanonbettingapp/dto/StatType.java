@@ -30,6 +30,36 @@ public enum StatType {
     },
     FG3M("fg3m") {
         @Override public Integer extract(BdlStatDTO s) { return s.fg3m(); }
+    },
+    // Combo props
+    PR("pr") {
+        @Override public Integer extract(BdlStatDTO s) {
+            int p = s.pts()  != null ? s.pts()  : 0;
+            int r = s.reb()  != null ? s.reb()  : 0;
+            return p + r;
+        }
+    },
+    PA("pa") {
+        @Override public Integer extract(BdlStatDTO s) {
+            int p = s.pts()  != null ? s.pts()  : 0;
+            int a = s.ast()  != null ? s.ast()  : 0;
+            return p + a;
+        }
+    },
+    RA("ra") {
+        @Override public Integer extract(BdlStatDTO s) {
+            int r = s.reb()  != null ? s.reb()  : 0;
+            int a = s.ast()  != null ? s.ast()  : 0;
+            return r + a;
+        }
+    },
+    PRA("pra") {
+        @Override public Integer extract(BdlStatDTO s) {
+            int p = s.pts()  != null ? s.pts()  : 0;
+            int r = s.reb()  != null ? s.reb()  : 0;
+            int a = s.ast()  != null ? s.ast()  : 0;
+            return p + r + a;
+        }
     };
 
     private final String key;
@@ -55,6 +85,9 @@ public enum StatType {
         }
         throw new IllegalArgumentException(
                 "Unsupported statType: '" + key + "'. " +
-                        "Supported values: pts, reb, ast, stl, blk, turnover, fg3m");
+                        "Supported values: pts, reb, ast, stl, blk, turnover, fg3m, pr, pa, ra, pra");
+    }
+    public boolean isCombo() {
+        return this == PR || this == PA || this == RA || this == PRA;
     }
 }

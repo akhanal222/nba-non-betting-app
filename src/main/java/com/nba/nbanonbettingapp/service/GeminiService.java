@@ -216,6 +216,23 @@ public class GeminiService {
         }
     }
 
+    private String statTypeLabel(String statType) {
+        return switch (statType.toLowerCase()) {
+            case "pts"      -> "Points";
+            case "reb"      -> "Rebounds";
+            case "ast"      -> "Assists";
+            case "stl"      -> "Steals";
+            case "blk"      -> "Blocks";
+            case "turnover" -> "Turnovers";
+            case "fg3m"     -> "3-Pointers Made";
+            case "pr"       -> "Points + Rebounds";
+            case "pa"       -> "Points + Assists";
+            case "ra"       -> "Rebounds + Assists";
+            case "pra"      -> "Points + Rebounds + Assists";
+            default         -> statType;
+        };
+    }
+
     // Prompt Builders
 
     /**
@@ -257,11 +274,11 @@ public class GeminiService {
                 concepts in plain words instead.
                 """.formatted(
                 p.playerName(),
-                p.statType(), p.line(),
-                p.projectedValue(), p.statType(),
+                statTypeLabel(p.statType()), p.line(),
+                p.projectedValue(), statTypeLabel(p.statType()),
                 p.line(), p.overProbability() * 100,
                 p.line(), p.underProbability() * 100,
-                p.gamesUsed(), p.ewmaPerMinute(), p.statType(),
+                p.gamesUsed(), p.ewmaPerMinute(), statTypeLabel(p.statType()),
                 p.projectedMinutes(),
                 p.paceAdjustment(),
                 p.opponentAdjustment(),
@@ -287,7 +304,7 @@ public class GeminiService {
         for (int i = 0; i < games.size(); i++) {
             HeadToHeadResultDTO.GameLineResult g = games.get(i);
             gameLog.append(String.format("  Game %d (%s): %d %s — %s the line of %.1f%n",
-                    i + 1, g.date(), g.statValue(), r.statType(),
+                    i + 1, g.date(), g.statValue(), statTypeLabel(r.statType()),
                     g.hitLine() ? "OVER" : "UNDER", r.statLine()));
         }
 
@@ -317,11 +334,11 @@ public class GeminiService {
                 Do NOT use any statistical jargon. Keep it conversational.
                 """.formatted(
                 r.playerName(),
-                r.statType(),
+                statTypeLabel(r.statType()),
                 r.statLine(),
                 context,
                 gameLog,
-                r.statType(), context, r.average(),
+                statTypeLabel(r.statType()), context, r.average(),
                 r.standardDeviation(),
                 r.statLine(), r.hitCount(), r.totalGames(), r.hitRate() * 100,
                 context
