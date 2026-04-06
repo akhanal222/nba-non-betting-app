@@ -124,6 +124,7 @@ export default function TopPlayers() {
                         weight: null,
                         jerseyNumber: null,
                         nbaPlayerId: null,
+                        isActive: true,
                         imageUrl: null,
                         rank: entry?.rank ?? index + 1,
                         statistic: entry?.seasonAvg ?? "—",

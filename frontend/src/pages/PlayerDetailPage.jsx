@@ -268,14 +268,18 @@ export default function PlayerDetailPage() {
             limit: recentGamesLimit,
             statType: "pts",
         }))
-            .then((r) => r.json())
+            .then(async (r) => {
+                if (!r.ok) {
+                    throw new Error(`Analysis request failed with status ${r.status}`);
+                }
+                return r.json();
+            })
             .then((data) => {
                 setAnalysisData(data);
                 setAnalysisCache((prev) => ({ ...prev, [cacheKey]: data }));
             })
             .catch(() => {
                 setAnalysisData(null);
-                setAnalysisCache((prev) => ({ ...prev, [cacheKey]: null }));
             })
             .finally(() => setAnalysisLoading(false));
     }, [resolvedExternalApiId, statLine, recentGamesLimit, analysisCache]);
