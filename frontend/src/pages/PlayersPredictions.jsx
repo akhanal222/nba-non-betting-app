@@ -54,13 +54,13 @@ const DEFAULT_LINES = {
 };
 
 const STAT_VALUE_KEYS = {
-    pts: "pointsScored",
-    reb: "totalRebounds",
-    ast: "assists",
-    stl: "steals",
-    blk: "blocks",
-    turnover: "turnovers",
-    fg3m: "threePointShotsMade",
+    pts: ["pointsScored"],
+    reb: ["totalRebounds"],
+    ast: ["assists"],
+    stl: ["steals"],
+    blk: ["blocks"],
+    turnover: ["turnovers"],
+    fg3m: ["threePointShotsMade"],
     pr:  ["pointsScored", "totalRebounds"],
     pa:  ["pointsScored", "assists"],
     ra:  ["totalRebounds", "assists"],
