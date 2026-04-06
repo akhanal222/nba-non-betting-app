@@ -45,10 +45,26 @@ const DEFAULT_LINES = {
     fg3m: "2.5",
 };
 
+const STAT_VALUE_KEYS = {
+    pts: "pointsScored",
+    reb: "totalRebounds",
+    ast: "assists",
+    stl: "steals",
+    blk: "blocks",
+    turnover: "turnovers",
+    fg3m: "threePointShotsMade",
+};
+
 function playerHeadshot(id) {
     return id
         ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
         : null;
+}
+
+function teamLogo(nbaTeamId) {
+    return nbaTeamId
+        ? `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg`
+        : "";
 }
 
 function normalizeTeamsResponse(payload) {
@@ -78,6 +94,127 @@ function normalizePlayerSearchResponse(payload) {
           : [];
 
     return rawPlayers.slice(0, 6);
+}
+
+function getGameDate(game) {
+    const rawDate = (
+        game?.gameDate ??
+        game?.game_date ??
+        game?.date ??
+        game?.game?.gameDate ??
+        game?.game?.game_date ??
+        game?.game?.date ??
+        ""
+    );
+
+    if (!rawDate) return "";
+
+    const normalized = rawDate.includes("T") ? rawDate : `${rawDate}T00:00:00`;
+    const parsed = new Date(normalized);
+
+    if (Number.isNaN(parsed.getTime())) return rawDate;
+
+    return parsed
+        .toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+        })
+        .toUpperCase();
+}
+
+function getRecentGameTeams(game) {
+    const matchupGame = game?.game ?? null;
+    const playerTeam = game?.team ?? null;
+    const homeTeam = matchupGame?.homeTeam ?? matchupGame?.home_team ?? null;
+    const awayTeam = matchupGame?.awayTeam ?? matchupGame?.away_team ?? null;
+    const playerTeamId = Number(playerTeam?.teamId ?? playerTeam?.id);
+    const homeTeamId = Number(homeTeam?.teamId ?? homeTeam?.id);
+    const awayTeamId = Number(awayTeam?.teamId ?? awayTeam?.id);
+
+    if (Number.isFinite(playerTeamId) && playerTeamId === homeTeamId) {
+        return { playerTeam: homeTeam, opponentTeam: awayTeam };
+    }
+
+    if (Number.isFinite(playerTeamId) && playerTeamId === awayTeamId) {
+        return { playerTeam: awayTeam, opponentTeam: homeTeam };
+    }
+
+    return { playerTeam: playerTeam ?? homeTeam, opponentTeam: awayTeam ?? homeTeam };
+}
+
+function PredictionRecentGameRow({ game, statType, line, index }) {
+    const valueKey = STAT_VALUE_KEYS[statType];
+    const rawValue = valueKey ? game?.[valueKey] : undefined;
+    const value = rawValue ?? "—";
+    const numericValue = parseFloat(rawValue);
+    const lineNumber = parseFloat(line);
+    const hit =
+        !Number.isNaN(numericValue) &&
+        !Number.isNaN(lineNumber) &&
+        numericValue > lineNumber;
+    const { playerTeam, opponentTeam } = getRecentGameTeams(game);
+
+    return (
+        <div className="flex items-center gap-10 px-10 py-8 bg-[#0a0e1c] border border-[#1a2540] hover:border-[#253660] transition-colors">
+            <span className="text-[white] text-xs font-mono w-5 text-right">
+                {index + 1}
+            </span>
+
+            <span className="text-[white] text-sm font-mono w-20">
+                {getGameDate(game) || "—"}
+            </span>
+
+            <div className="flex items-center gap-2 w-24">
+                {playerTeam?.nbaTeamId && (
+                    <img
+                        src={teamLogo(playerTeam.nbaTeamId)}
+                        alt=""
+                        className="w-7 h-7 object-contain"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
+                )}
+                <span className="text-[white] text-xs font-semibold uppercase tracking-wide">
+                    {playerTeam?.abbreviation ?? playerTeam?.teamName ?? ""}
+                </span>
+                <span className="text-[white] text-xs">vs</span>
+                {opponentTeam?.nbaTeamId && (
+                    <img
+                        src={teamLogo(opponentTeam.nbaTeamId)}
+                        alt=""
+                        className="w-7 h-7 object-contain"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
+                )}
+                <span className="text-[white] text-xs font-semibold uppercase tracking-wide">
+                    {opponentTeam?.abbreviation ?? opponentTeam?.teamName ?? ""}
+                </span>
+            </div>
+
+            <div className="flex gap-5 flex-1 justify-end">
+                <div className="text-center min-w-[50px]">
+                    <p className="text-white text-sm font-semibold">
+                        {game.minutesPlayed ?? game.min ?? game.minutes ?? "—"}
+                    </p>
+                    <p className="text-[#ffffff] text-[10px] uppercase">MIN</p>
+                </div>
+
+                <div className="text-center min-w-[50px]">
+                    <p
+                        className={`text-sm font-semibold ${!Number.isNaN(numericValue) ? (hit ? "text-green-500" : "text-red-500") : "text-white"}`}
+                    >
+                        {value}
+                    </p>
+                    <p className="text-[#ffffff] text-[10px] uppercase">
+                        {statType}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function buildDistributionChartData(prediction) {
@@ -527,8 +664,11 @@ export default function PlayersPredictions() {
                 const statsRes = await fetch(API.playerStats(playerApiId));
                 if (statsRes.ok) {
                     const statsData = await statsRes.json();
-                    const games = statsData?.recentGames ?? statsData?.games ?? [];
-                    setRecentGames(Array.isArray(games) ? games.slice(0, 5) : []);
+                    const games = Array.isArray(statsData)
+                        ? statsData
+                        : statsData?.recentGames ?? statsData?.games ?? [];
+                    const allGames = Array.isArray(games) ? games : [];
+                    setRecentGames(allGames.slice(0, 5));
                 }
             } catch {
                 // Non-critical secondary request.
@@ -540,7 +680,6 @@ export default function PlayersPredictions() {
         }
     };
 
-    const getStatValue = (game) => game?.[statType] ?? "—";
     const overPct = prediction ? (prediction.overProbability * 100).toFixed(1) : "0";
     const isOver = prediction?.overProbability > 0.5;
     const verdictPct = prediction
@@ -782,9 +921,6 @@ export default function PlayersPredictions() {
                                             <p className="predict-chart__title">
                                                 Projected Distribution
                                             </p>
-                                            <p className="predict-chart__subtitle">
-                                                Neutral distribution centered on the projection
-                                            </p>
                                         </div>
                                         <div className="predict-chart__canvas">
                                             <Bar
@@ -870,67 +1006,36 @@ export default function PlayersPredictions() {
                                         <p className="predict-section__eyebrow">
                                             RECENT GAMES
                                         </p>
-                                        <table className="predict-games__table">
-                                            <thead>
-                                                <tr>
-                                                    <th className="predict-games__th">
-                                                        Date
-                                                    </th>
-                                                    <th className="predict-games__th">
-                                                        MIN
-                                                    </th>
-                                                    <th className="predict-games__th">
-                                                        {statType.toUpperCase()}
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {recentGames.map((game, index) => {
-                                                    const value = getStatValue(game);
-                                                    const numericValue =
-                                                        parseFloat(value);
-                                                    const lineNumber =
-                                                        parseFloat(line);
-                                                    const hit =
-                                                        !Number.isNaN(numericValue) &&
-                                                        !Number.isNaN(lineNumber) &&
-                                                        numericValue > lineNumber;
-
-                                                    return (
-                                                        <tr key={index}>
-                                                            <td className="predict-games__td">
-                                                                {game.gameDate ??
-                                                                    game.game_date ??
-                                                                    game.date ??
-                                                                    "-"}
-                                                            </td>
-                                                            <td className="predict-games__td">
-                                                                {game.min ??
-                                                                    game.minutes ??
-                                                                    "-"}
-                                                            </td>
-                                                            <td
-                                                                className={`predict-games__td ${!Number.isNaN(numericValue) ? (hit ? "predict-games__td--hit" : "predict-games__td--miss") : ""}`}
-                                                            >
-                                                                {value}
-                                                                {!Number.isNaN(
-                                                                    numericValue
-                                                                ) &&
-                                                                    !Number.isNaN(
-                                                                        lineNumber
-                                                                    ) && (
-                                                                        <span className="predict-games__arrow">
-                                                                            {hit
-                                                                                ? "▲"
-                                                                                : "▼"}
-                                                                        </span>
-                                                                    )}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
+                                        <div className="px-10 pt-6 pb-2 flex items-center gap-10 border-b border-[#1a2540] mt-6! ">
+                                            <span className="text-[#ffffff] text-[10px] font-semibold uppercase tracking-wider w-8 text-right mb-3!">
+                                                #
+                                            </span>
+                                            <span className="text-[#ffffff] text-[12px] font-semibold uppercase tracking-wider w-32 mb-3!">
+                                                Date
+                                            </span>
+                                            <span className="text-[#ffffff] text-[12px] font-semibold uppercase tracking-wider w-24 mb-3!">
+                                                Matchup
+                                            </span>
+                                            <div className="flex gap-5 flex-1 justify-end">
+                                                <span className="text-[#ffffff] text-[12px] font-semibold uppercase tracking-wider min-w-[50px] text-center mb-3!">
+                                                    MIN PLAYED
+                                                </span>
+                                                <span className="text-[#ffffff] text-[12px] font-semibold uppercase tracking-wider min-w-[50px] text-center mb-3!">
+                                                    {statType}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-10 flex flex-col gap-5">
+                                            {recentGames.map((game, index) => (
+                                                <PredictionRecentGameRow
+                                                    key={game.statisticId ?? index}
+                                                    game={game}
+                                                    statType={statType}
+                                                    line={line}
+                                                    index={index}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

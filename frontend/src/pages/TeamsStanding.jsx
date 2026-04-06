@@ -239,7 +239,7 @@ export default function NBAStandings() {
                                 fontSize: 13, fontWeight: 600, cursor: "pointer",
                                 fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.04em",
                                 background: conf === c ? "#3d5ce8" : "rgba(255,255,255,0.05)",
-                                color: conf === c ? "#fff" : "#8b949e",
+                                color: conf === c ? "#fff" : "white",
                                 transition: "all 0.2s",
                             }}>
                                 {c === "All" ? "ALL TEAMS" : c.toUpperCase() + "ERN"}
@@ -354,7 +354,7 @@ export default function NBAStandings() {
                                                     {row.team.teamName.replace(row.team.city, "").trim()}
                                                 </span>
                                             </div>
-                                            <div style={{ fontSize: 11, color: "#555c68", fontFamily: "'JetBrains Mono', monospace" }}>
+                                            <div style={{ fontSize: 11, color: "white", fontFamily: "'JetBrains Mono', monospace" }}>
                                                 {row.team.division}
                                             </div>
                                         </div>

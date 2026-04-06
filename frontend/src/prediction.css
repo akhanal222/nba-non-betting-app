@@ -40,7 +40,7 @@
 .predict-field__label,
 .predict-section__eyebrow {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -381,9 +381,7 @@
 .predict-breakdown__label,
 .predict-breakdown__value,
 .predict-breakdown__total-label,
-.predict-breakdown__total-value,
-.predict-games__th,
-.predict-games__td {
+.predict-breakdown__total-value {
     color: var(--text-primary);
 }
 
@@ -401,30 +399,6 @@
 .predict-breakdown__total-value {
     font-size: 28px;
     font-weight: 800;
-}
-
-.predict-games__table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 14px;
-}
-
-.predict-games__th,
-.predict-games__td {
-    text-align: left;
-    padding: 12px 0;
-    border-bottom: 1px solid #14171f;
-}
-
-.predict-games__th {
-    color: var(--text-muted);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-}
-
-.predict-games__arrow {
-    margin-left: 8px;
-    font-size: 11px;
 }
 
 @media (max-width: 1100px) {
