@@ -26,6 +26,7 @@ public record PlayerComparisonDTO(
 
             // --- Bio Info ---
             String position,
+            String teamName,
             String height,
             String weight,
             String college,

@@ -73,6 +73,7 @@ public class PlayerComparisonService {
                 p.getLastName(),
                 imageUrl,
                 p.getPosition(),
+                p.getTeam() != null ? p.getTeam().getTeamName() : null,
                 p.getHeight(),
                 p.getWeight(),
                 p.getCollege(),
