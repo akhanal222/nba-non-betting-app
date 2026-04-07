@@ -33,6 +33,10 @@ const STAT_TYPES = [
     { value: "blk", label: "Blocks" },
     { value: "turnover", label: "Turnovers" },
     { value: "fg3m", label: "3PT Made" },
+    { value: "pr",       label: "Pts + Reb (P+R)" },
+    { value: "pa",       label: "Pts + Ast (P+A)" },
+    { value: "ra",       label: "Reb + Ast (R+A)" },
+    { value: "pra",      label: "Pts + Reb + Ast (PRA)" },
 ];
 
 const DEFAULT_LINES = {
@@ -43,16 +47,24 @@ const DEFAULT_LINES = {
     blk: "1.5",
     turnover: "2.5",
     fg3m: "2.5",
+    pr:  "32.5",
+    pa:  "30.5",
+    ra:  "12.5",
+    pra: "38.5",
 };
 
 const STAT_VALUE_KEYS = {
-    pts: "pointsScored",
-    reb: "totalRebounds",
-    ast: "assists",
-    stl: "steals",
-    blk: "blocks",
-    turnover: "turnovers",
-    fg3m: "threePointShotsMade",
+    pts: ["pointsScored"],
+    reb: ["totalRebounds"],
+    ast: ["assists"],
+    stl: ["steals"],
+    blk: ["blocks"],
+    turnover: ["turnovers"],
+    fg3m: ["threePointShotsMade"],
+    pr:  ["pointsScored", "totalRebounds"],
+    pa:  ["pointsScored", "assists"],
+    ra:  ["totalRebounds", "assists"],
+    pra: ["pointsScored", "totalRebounds", "assists"],
 };
 
 function playerHeadshot(id) {
@@ -143,8 +155,10 @@ function getRecentGameTeams(game) {
 }
 
 function PredictionRecentGameRow({ game, statType, line, index }) {
-    const valueKey = STAT_VALUE_KEYS[statType];
-    const rawValue = valueKey ? game?.[valueKey] : undefined;
+    const keys = STAT_VALUE_KEYS[statType] ?? [];
+    const rawValue = keys.length > 0
+        ? keys.reduce((sum, k) => sum + (game?.[k] ?? 0), 0)
+        : undefined;
     const value = rawValue ?? "—";
     const numericValue = parseFloat(rawValue);
     const lineNumber = parseFloat(line);

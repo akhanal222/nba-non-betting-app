@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/Navbar.jsx";
+import PlayerCard from "../components/Playercard.jsx";
 
 const API_BASE = "http://localhost:8080";
 const API = {
@@ -38,6 +39,7 @@ export default function TopPlayers() {
     const [teams, setTeams] = useState([]);
     const [q, setQ] = useState("");
     const [statType, setStatType] = useState("pts");
+    const [showSearchCards, setShowSearchCards] = useState(false);
 
     const resolveTeamByName = (teamName) => {
         if (!teamName) return null;
@@ -68,6 +70,7 @@ export default function TopPlayers() {
 
             return {
                 ...basePlayer,
+                isActive: matched?.isActive ?? matched?.is_active ?? basePlayer.isActive ?? null,
                 position: basePlayer.position ?? matched?.position ?? null,
                 height: matched?.height ?? null,
                 weight: matched?.weight ?? null,
@@ -129,6 +132,7 @@ export default function TopPlayers() {
                         rank: entry?.rank ?? index + 1,
                         statistic: entry?.seasonAvg ?? "—",
                         avgLast5: entry?.last5Avg ?? "—",
+                        gamesPlayed: entry?.gamesPlayed ?? "—",
                         team: {
                             abbreviation: matchedTeam?.abbreviation ?? null,
                             teamName: entry?.teamName ?? matchedTeam?.teamName ?? null,
@@ -147,6 +151,7 @@ export default function TopPlayers() {
                 if (!cancelled) {
                     setPlayers(enrichedPlayers);
                     setTopPlayers(enrichedPlayers);
+                    setShowSearchCards(false);
                     setLoading(false);
                 }
             } catch (error) {
@@ -197,6 +202,7 @@ export default function TopPlayers() {
         if (query.length < 2) {
             setPlayers(topPlayers);
             setShowSuggestions(false);
+            setShowSearchCards(false);
             return;
         }
 
@@ -210,6 +216,7 @@ export default function TopPlayers() {
                 externalApiId: player.externalApiId ?? player.playerId ?? null,
                 firstName: player.firstName ?? "",
                 lastName: player.lastName ?? "",
+                isActive: true,
                 position: player.position ?? null,
                 height: player.height ?? null,
                 weight: player.weight ?? null,
@@ -232,6 +239,7 @@ export default function TopPlayers() {
             }));
 
             setPlayers(mappedPlayers);
+            setShowSearchCards(true);
         } catch (error) {
             console.error("Failed to search players:", error);
             setPlayers([]);
@@ -247,6 +255,7 @@ export default function TopPlayers() {
             externalApiId: player.externalApiId ?? player.playerId ?? null,
             firstName: player.firstName ?? "",
             lastName: player.lastName ?? "",
+            isActive: true,
             position: player.position ?? null,
             height: player.height ?? null,
             weight: player.weight ?? null,
@@ -269,6 +278,7 @@ export default function TopPlayers() {
         }]);
         setShowSuggestions(false);
         setSuggestions([]);
+        setShowSearchCards(true);
     };
 
     return (
@@ -406,13 +416,22 @@ export default function TopPlayers() {
                 ) : (
                     <div className="player-grid">
                         {players.map((player) => (
-                            <LeaderboardCard
-                                key={player.playerId}
-                                player={player}
-                                onClick={(p) =>
-                                    navigate(`/players/${p.playerId}`, { state: { player: p } })
-                                }
-                            />
+                            showSearchCards ? (
+                                <PlayerCard
+                                    key={player.playerId}
+                                    player={player}
+                                    selected={false}
+                                    onAnalyze={(p) => navigate(`/players/${p.playerId}`, { state: { player: p } })}
+                                />
+                            ) : (
+                                <LeaderboardCard
+                                    key={player.playerId}
+                                    player={player}
+                                    onClick={(p) =>
+                                        navigate(`/players/${p.playerId}`, { state: { player: p } })
+                                    }
+                                />
+                            )
                         ))}
                     </div>
                 )}
@@ -505,15 +524,16 @@ function LeaderboardCard({ player, onClick, selected }) {
 
             <div
                 style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 28,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    alignItems: "start",
+                    gap: 18,
                     marginTop: 10,
                 }}
             >
                 <Stat value={player.statistic} label="Last season AVG" />
                 <Stat value={player.avgLast5} label="5 Game AVG" />
-                <Stat value={player.rank} label="Last season Rank" />
+                <Stat value={player.gamesPlayed} label="Game Played This Season" />
             </div>
 
             <button
@@ -540,11 +560,28 @@ function LeaderboardCard({ player, onClick, selected }) {
 
 function Stat({ value, label }) {
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <span style={{ color: "#9eb8ff", fontWeight: 700, fontSize: "1.2rem" }}>
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                minWidth: 0,
+                textAlign: "center",
+            }}
+        >
+      <span style={{ color: "#9eb8ff", fontWeight: 700, fontSize: "1.2rem", lineHeight: 1.15 }}>
         {value ?? "—"}
       </span>
-            <span style={{ color: UI.textMuted, fontSize: "0.72rem", letterSpacing: "0.08em" }}>
+            <span
+                style={{
+                    color: UI.textMuted,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.08em",
+                    lineHeight: 1.25,
+                    marginTop: 6,
+                }}
+            >
         {label}
       </span>
         </div>

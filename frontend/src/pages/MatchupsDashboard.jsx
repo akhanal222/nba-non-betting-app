@@ -33,6 +33,10 @@ const STAT_TYPES = [
     { key: "stl", label: "STL", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
     { key: "turnover", label: "TOVR", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
     { key: "fg3m", label: "3PT", color: "#47e897", glow: "rgba(232,99,71,0.15)" },
+    { key: "pr",       label: "P+R",  color: "#c084fc", glow: "rgba(192,132,252,0.15)" },
+    { key: "pa",       label: "P+A",  color: "#c084fc", glow: "rgba(192,132,252,0.15)" },
+    { key: "ra",       label: "R+A",  color: "#c084fc", glow: "rgba(192,132,252,0.15)" },
+    { key: "pra",      label: "PRA",  color: "#c084fc", glow: "rgba(192,132,252,0.15)" },
 
 
 
@@ -46,6 +50,10 @@ const DEFAULT_STAT_LINES = {
     stl: 0.5,
     turnover: 2.5,
     fg3m: 1.5,
+    pr:  32.5,
+    pa:  30.5,
+    ra:  12.5,
+    pra: 38.5,
 };
 
 function playerHeadshot(id) {

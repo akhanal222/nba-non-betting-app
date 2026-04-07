@@ -253,7 +253,7 @@ public class PlayerStatsService {
 
         // Step 5: Extract stat values and compute analytics
         List<Integer> values = filteredStats.stream()
-                .map(s -> extractStatValue(stat, s))
+                .map(s -> extractStatValue(s, stat))
                 .toList();
 
         double average  = values.stream().mapToInt(i -> i).average().orElse(0.0);
@@ -269,7 +269,7 @@ public class PlayerStatsService {
                 .map(s -> {
                     String date = s.getGame() != null && s.getGame().getGameDate() != null
                             ? s.getGame().getGameDate().toString() : "unknown";
-                    int val = extractStatValue(stat, s);
+                    int val = extractStatValue(s, stat);
                     return new HeadToHeadResultDTO.GameLineResult(date, val, val > statLine);
                 })
                 .toList();
@@ -302,17 +302,24 @@ public class PlayerStatsService {
      * Extracts the correct stat value from a PlayerGameStatistic
      * based on the requested StatType.
      */
-    private int extractStatValue(StatType stat, PlayerGameStatistic s) {
-        return switch (stat) {
-            case PTS      -> s.getPointsScored()        != null ? s.getPointsScored()        : 0;
-            case REB      -> s.getTotalRebounds()        != null ? s.getTotalRebounds()        : 0;
-            case AST      -> s.getAssists()              != null ? s.getAssists()              : 0;
-            case STL      -> s.getSteals()               != null ? s.getSteals()               : 0;
-            case BLK      -> s.getBlocks()               != null ? s.getBlocks()               : 0;
-            case TURNOVER -> s.getTurnovers()            != null ? s.getTurnovers()            : 0;
-            case FG3M     -> s.getThreePointShotsMade()  != null ? s.getThreePointShotsMade()  : 0;
+    private Integer extractStatValue(PlayerGameStatistic stat, StatType statType) {
+        return switch (statType) {
+            case PTS      -> stat.getPointsScored();
+            case REB      -> stat.getTotalRebounds();
+            case AST      -> stat.getAssists();
+            case STL      -> stat.getSteals();
+            case BLK      -> stat.getBlocks();
+            case TURNOVER -> stat.getTurnovers();
+            case FG3M     -> stat.getThreePointShotsMade();
+            // Combo: sum component values (treat null as 0)
+            case PR  -> safeInt(stat.getPointsScored()) + safeInt(stat.getTotalRebounds());
+            case PA  -> safeInt(stat.getPointsScored()) + safeInt(stat.getAssists());
+            case RA  -> safeInt(stat.getTotalRebounds()) + safeInt(stat.getAssists());
+            case PRA -> safeInt(stat.getPointsScored()) + safeInt(stat.getTotalRebounds()) + safeInt(stat.getAssists());
         };
     }
+
+    private int safeInt(Integer v) { return v != null ? v : 0; }
 
     /** Rounds to 2 decimal places for clean API output. */
     private double round(double value) {
