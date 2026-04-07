@@ -105,7 +105,7 @@ public class PlayerStatLeaderboardService {
             // Store both season-long and recent-form metrics for the leaderboard card.
             BigDecimal seasonAvg = fetchSeasonAverageForStat(externalApiId, seasonYear, dbStatType);
             BigDecimal last5Avg = calculateLast5AverageFromDb(player.getPlayerId(), seasonYear, dbStatType);
-            Integer gamesPlayed = countSeasonGamesFromDb(player.getPlayerId(), seasonYear);
+            Integer gamesPlayed = fetchSeasonGamesPlayed(externalApiId, seasonYear);
 
             PlayerStatLeaderboard row = PlayerStatLeaderboard.builder()
                     .player(player)
@@ -177,8 +177,16 @@ public class PlayerStatLeaderboardService {
         };
     }
 
-    private Integer countSeasonGamesFromDb(Long playerId, Integer seasonYear) {
-        return playerGameStatisticRepository.countByPlayer_PlayerIdAndGame_SeasonYear(playerId, seasonYear);
+    private Integer fetchSeasonGamesPlayed(Long externalApiId, Integer seasonYear) {
+        BdlResponseDTO<BdlSeasonAverageDTO> response =
+                balldontlieService.getSeasonAverages(externalApiId, seasonYear);
+
+        if (response == null || response.data() == null || response.data().isEmpty()) {
+            return 0;
+        }
+
+        Integer gamesPlayed = response.data().get(0).gamesPlayed();
+        return gamesPlayed != null ? gamesPlayed : 0;
     }
 
     private PlayerStatLeaderboardDTO toDTO(PlayerStatLeaderboard row) {
