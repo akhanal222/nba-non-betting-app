@@ -23,6 +23,8 @@ const API = {
         `http://localhost:8080/stats/player/external/${id}?limit=${limit}`,
     recentAnalyze: (params) =>
         `http://localhost:8080/stats/recent/analyze?${new URLSearchParams(params)}`,
+    explainRecent: (params) =>
+        `http://localhost:8080/api/ai/explain/matchup?${new URLSearchParams(params)}`,
     teams: "http://localhost:8080/teams",
 };
 
@@ -208,6 +210,9 @@ export default function PlayerDetailPage() {
     const [recentGamesLimit, setRecentGamesLimit] = useState(5);
     const [chartType, setChartType] = useState("line");
     const [imgErr, setImgErr] = useState(false);
+    const [aiExplanation, setAiExplanation] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     useEffect(() => {
         fetch(API.teams)
@@ -224,6 +229,9 @@ export default function PlayerDetailPage() {
         setAnalysisCache({});
         setRawStats([]);
         setAnalysisData(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
     }, [resolvedExternalApiId]);
 
     useEffect(() => {
@@ -255,6 +263,10 @@ export default function PlayerDetailPage() {
         if (!resolvedExternalApiId) return;
         const cacheKey = `${resolvedExternalApiId}-${recentGamesLimit}-${statLine}`;
 
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
+
         if (cacheKey in analysisCache) {
             setAnalysisData(analysisCache[cacheKey]);
             setAnalysisLoading(false);
@@ -283,6 +295,35 @@ export default function PlayerDetailPage() {
             })
             .finally(() => setAnalysisLoading(false));
     }, [resolvedExternalApiId, statLine, recentGamesLimit, analysisCache]);
+
+    const explainRecentForm = async () => {
+        if (!resolvedExternalApiId || !analysisData) return;
+
+        setAiLoading(true);
+        setAiError(null);
+
+        try {
+            const res = await fetch(API.explainRecent({
+                playerApiId: resolvedExternalApiId,
+                statLine,
+                limit: recentGamesLimit,
+                statType: "pts",
+                analysisType: "RECENT",
+            }));
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || `Server error ${res.status}`);
+            }
+
+            setAiExplanation(await res.json());
+        } catch (err) {
+            setAiExplanation(null);
+            setAiError("AI is not available right now.");
+        } finally {
+            setAiLoading(false);
+        }
+    };
 
     const recentGamesChartData = buildRecentGamesChart(rawStats, statLine);
 
@@ -442,28 +483,31 @@ export default function PlayerDetailPage() {
                             <div className="w-6 h-6 border-2 border-[#4f7cff] border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : analysisData && (
-                        <div className="grid grid-cols-4 gap-4 mt-3 mb-6 pb-6 border-b border-[#111825]">
-                            <div className="py-2">
-                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Avg PTS</p>
-                                <p className="text-base font-semibold text-white mb-1! ml-2!">{analysisData.average ?? "—"}</p>
+                        <>
+                            <div className="grid grid-cols-4 gap-4 mt-3 mb-6 pb-6 border-b border-[#111825]">
+                                <div className="py-2">
+                                    <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Avg PTS</p>
+                                    <p className="text-base font-semibold text-white mb-1! ml-2!">{analysisData.average ?? "—"}</p>
+                                </div>
+                                <div className="py-2">
+                                    <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Hit Rate</p>
+                                    <p className="text-base font-semibold text-white mr-5!">
+                                        {typeof analysisData.hitRate === "number" ? `${Math.round(analysisData.hitRate * 100)}%` : "—"}
+                                    </p>
+                                </div>
+                                <div className="py-2">
+                                    <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Hit Count</p>
+                                    <p className="text-base font-semibold text-white">
+                                        {analysisData.hitCount ?? "—"}/{analysisData.totalGames ?? "—"}
+                                    </p>
+                                </div>
+                                <div className="py-2">
+                                    <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Std Dev</p>
+                                    <p className="text-base font-semibold text-white">{analysisData.standardDeviation ?? "—"}</p>
+                                </div>
                             </div>
-                            <div className="py-2">
-                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1! ml-2!">Hit Rate</p>
-                                <p className="text-base font-semibold text-white mr-5!">
-                                    {typeof analysisData.hitRate === "number" ? `${Math.round(analysisData.hitRate * 100)}%` : "—"}
-                                </p>
-                            </div>
-                            <div className="py-2">
-                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Hit Count</p>
-                                <p className="text-base font-semibold text-white">
-                                    {analysisData.hitCount ?? "—"}/{analysisData.totalGames ?? "—"}
-                                </p>
-                            </div>
-                            <div className="py-2">
-                                <p className="text-[#ffffff] text-[10px] uppercase tracking-wider mb-1">Std Dev</p>
-                                <p className="text-base font-semibold text-white">{analysisData.standardDeviation ?? "—"}</p>
-                            </div>
-                        </div>
+
+                        </>
                     )}
                     <div style={{ height: 320  }} className="mb-4! mt-4!">
                         {rawLoading ? (
@@ -478,7 +522,61 @@ export default function PlayerDetailPage() {
                                 : <Line data={recentGamesChartData} options={recentGamesChartOptions} />
                         )}
                     </div>
+
                 </div>
+
+                {analysisData && (
+                    <div className="border border-[#1a2540] bg-[#0a0e1c] px-10 py-8 rounded-[20px] overflow-hidden">
+                        <div className="player-detail-ai-header">
+                            <div>
+                                <p className="text-[white] text-xs font-semibold uppercase tracking-widest ml-2! mb-1!">
+                                    Need an explanation? Try this
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={explainRecentForm}
+                                disabled={aiLoading}
+                                className="px-5 py-2 text-xs font-semibold border border-[white]! transition-colors rounded-md mr-5! mt-3!"
+                                style={{
+                                    background: aiLoading ? "transparent" : "#4f7cff",
+                                    color: "#fff",
+                                    opacity: aiLoading ? 0.7 : 1,
+                                }}
+                            >
+                                {aiLoading ? "Explaining" : aiExplanation ? "Refresh Explain" : "Explain"}
+                            </button>
+                        </div>
+
+                        {aiError && (
+                            <div className="border border-[#1a2540] bg-[rgba(255,107,107,0.08)] rounded-[16px] p-4 mb-6">
+                                <p className="text-[#ffffff] text-sm">{aiError}</p>
+                            </div>
+                        )}
+
+                        {aiExplanation ? (
+                            <div className="player-detail-ai-card">
+                                <div className="player-detail-ai-card__header">
+                                    <p className="player-detail-ai-card__label">
+                                        {aiExplanation.analysisType.replaceAll("_", " ")}
+                                    </p>
+                                    <p className="player-detail-ai-card__meta">
+                                        {aiExplanation.cached}
+                                    </p>
+                                </div>
+                                <p className="player-detail-ai-card__body">
+                                    {aiExplanation.explanation}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="player-detail-ai-empty">
+                                <p className="player-detail-ai-empty__title">
+                                    Press Explain to generate the AI summary.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ── Recent Games ── */}
                 <div className="border border-[#1a2540] bg-[#0a0e1c] rounded-[20px] overflow-hidden">

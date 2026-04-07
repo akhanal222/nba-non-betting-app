@@ -63,6 +63,7 @@ public class GeminiService {
      */
     public AiExplanationResponseDTO explainPropPrediction(
             Long playerApiId,
+            Long opponentTeamApiId,
             PropPredictResponseDTO prediction,
             boolean forceRefresh
     ) {
@@ -71,17 +72,18 @@ public class GeminiService {
         String paramsJson = toJson(Map.of(
                 "statType", prediction.statType(),
                 "line", prediction.line(),
+                "opponentTeamApiId", opponentTeamApiId,
                 "opponentAdj", prediction.opponentAdjustment()
         ));
 
         if (!forceRefresh) {
             Optional<AiExplanationResponseDTO> cached =
-                    getCachedExplanation(player, "PROP_PREDICTION", paramsJson);
+                    getCachedExplanation(player, metricType, paramsJson);
             if (cached.isPresent()) return cached.get();
         }
 
         String prompt = buildPropPredictionPrompt(prediction);
-        return generateAndPersist(player, "PROP_PREDICTION", paramsJson, toJson(prediction), prompt);
+        return generateAndPersist(player, metricType, paramsJson, toJson(prediction), prompt);
     }
 
     /**
@@ -136,8 +138,8 @@ public class GeminiService {
 
         if (!forceRefresh) {
             Optional<AnalyticsSnapshot> snapshotOpt =
-                    snapshotRepository.findTopByPlayer_PlayerIdAndMetricTypeOrderByComputedAtDesc(
-                            player.getPlayerId(), "PLAYER_COMPARISON");
+                    snapshotRepository.findTopByPlayer_PlayerIdAndMetricTypeAndParametersOrderByComputedAtDesc(
+                            player.getPlayerId(), "PLAYER_COMPARISON", paramsJson);
 
             if (snapshotOpt.isPresent()) {
                 Optional<AiExplanation> cachedEx =
@@ -501,8 +503,8 @@ public class GeminiService {
             Player player, String metricType, String paramsJson
     ) {
         Optional<AnalyticsSnapshot> snapshotOpt =
-                snapshotRepository.findTopByPlayer_PlayerIdAndMetricTypeOrderByComputedAtDesc(
-                        player.getPlayerId(), metricType);
+                snapshotRepository.findTopByPlayer_PlayerIdAndMetricTypeAndParametersOrderByComputedAtDesc(
+                        player.getPlayerId(), metricType, paramsJson);
 
         if (snapshotOpt.isEmpty()) return Optional.empty();
 

@@ -23,6 +23,8 @@ const API = {
         `http://localhost:8080/stats/player/external/${apiId}`,
     predict: (playerApiId, opponentTeamApiId, statType, line) =>
         `http://localhost:8080/api/props/predict?playerApiId=${playerApiId}&opponentTeamApiId=${opponentTeamApiId}&statType=${statType}&line=${line}`,
+    explainPrediction: (playerApiId, opponentTeamApiId, statType, line) =>
+        `http://localhost:8080/api/ai/explain/prop?playerApiId=${playerApiId}&opponentTeamApiId=${opponentTeamApiId}&statType=${statType}&line=${line}`,
 };
 
 const STAT_TYPES = [
@@ -619,6 +621,9 @@ export default function PlayersPredictions() {
     const [recentGames, setRecentGames] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [aiExplanation, setAiExplanation] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     useEffect(() => {
         fetch(API.teams)
@@ -632,6 +637,9 @@ export default function PlayersPredictions() {
         setPrediction(null);
         setRecentGames([]);
         setError(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
     }, [statType]);
 
     const playerApiId = player?.externalApiId ?? player?.playerId;
@@ -643,6 +651,9 @@ export default function PlayersPredictions() {
         setPrediction(null);
         setRecentGames([]);
         setError(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
     };
 
     const handlePredict = async () => {
@@ -652,6 +663,9 @@ export default function PlayersPredictions() {
         setError(null);
         setPrediction(null);
         setRecentGames([]);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
 
         try {
             const preloadStatsRes = await fetch(API.playerStats(playerApiId));
@@ -691,6 +705,31 @@ export default function PlayersPredictions() {
             setError(err.message ?? "Prediction failed");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExplainPrediction = async () => {
+        if (!prediction || !playerApiId || !opponentTeamApiId) return;
+
+        setAiLoading(true);
+        setAiError(null);
+
+        try {
+            const res = await fetch(
+                API.explainPrediction(playerApiId, opponentTeamApiId, statType, line)
+            );
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || `Server error ${res.status}`);
+            }
+
+            setAiExplanation(await res.json());
+        } catch (err) {
+            setAiExplanation(null);
+            setAiError("AI is not available right now.");
+        } finally {
+            setAiLoading(false);
         }
     };
 
@@ -942,6 +981,72 @@ export default function PlayersPredictions() {
                                                 options={distributionChartOptions}
                                             />
                                         </div>
+                                    </div>
+                                )}
+
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: "12px",
+                                        marginBottom: "20px",
+                                        flexWrap: "wrap",
+                                    }}
+                                >
+                                    <div>
+                                        <p className="predict-summary__eyebrow">Need an explanation? Try this</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleExplainPrediction}
+                                        disabled={aiLoading}
+                                        className={`controls-analyze-btn ${!aiLoading ? "controls-analyze-btn--ready" : "controls-analyze-btn--disabled"}`}
+                                    >
+                                        {aiLoading ? (
+                                            <span className="controls-analyze-spinner">
+                                                <span className="controls-analyze-spinner__ring" />
+                                                Explaining
+                                            </span>
+                                        ) : (
+                                            aiExplanation ? "Refresh Explain" : "Explain"
+                                        )}
+                                    </button>
+                                </div>
+
+                                {aiError && (
+                                    <div className="results-error" style={{ marginBottom: "20px" }}>
+                                        <span className="results-error__icon">!</span>
+                                        <p>{aiError}</p>
+                                    </div>
+                                )}
+
+                                {aiExplanation && (
+                                    <div
+                                        style={{
+                                            marginBottom: "24px",
+                                            padding: "20px",
+                                            border: "1px solid #1a2540",
+                                            borderRadius: "16px",
+                                            background: "#0a0e1c",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                gap: "12px",
+                                                flexWrap: "wrap",
+                                                marginBottom: "10px",
+                                            }}
+                                        >
+                                            <p className="predict-summary__eyebrow" style={{ margin: 0 }}>
+                                                {aiExplanation.analysisType.replaceAll("_", " ")}
+                                            </p>
+                                        </div>
+                                        <p style={{ color: "#f4f7ff", lineHeight: 1.7, margin: 0, fontFamily:"Helvetica"}}>
+                                            {aiExplanation.explanation}
+                                        </p>
                                     </div>
                                 )}
 
