@@ -13,20 +13,12 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
+import { API } from "../api";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
 const RECENT_GAME_LIMITS = [5, 10, 15];
 
-const API = {
-    playerStats: (id, limit) =>
-        `http://localhost:8080/stats/player/external/${id}?limit=${limit}`,
-    recentAnalyze: (params) =>
-        `http://localhost:8080/stats/recent/analyze?${new URLSearchParams(params)}`,
-    explainRecent: (params) =>
-        `http://localhost:8080/api/ai/explain/matchup?${new URLSearchParams(params)}`,
-    teams: "http://localhost:8080/teams",
-};
 
 function headshot(id) {
     return id ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png` : null;

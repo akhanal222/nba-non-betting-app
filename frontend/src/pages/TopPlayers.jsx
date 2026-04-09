@@ -2,14 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/Navbar.jsx";
 import PlayerCard from "../components/Playercard.jsx";
-
-const API_BASE = "http://localhost:8080";
-const API = {
-    teams: "http://localhost:8080/teams",
-    playerSearch: (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
-    leaderboard: (statType, season) =>
-        `${API_BASE}/leaderboard/${statType}?season=${season}`,
-};
+import { API } from "../api";
 const LAST_FULL_SEASON = 2025;
 const STAT_OPTIONS = [
     { key: "pts", label: "PTS" },

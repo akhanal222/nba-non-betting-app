@@ -13,19 +13,11 @@ import {
 import NavBar from "../components/Navbar.jsx";
 import PlayerVsPlayer from "./PlayerVsPlayer.jsx";
 import "../matchup.css";
+import { API } from "../api";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const API = {
-    teams: "http://localhost:8080/teams",
-    playerSearch: (q) =>
-        `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
-    matchup: (params) =>
-        `http://localhost:8080/api/matchup/analyze?${new URLSearchParams(params)}`,
-    explainMatchup: (params) =>
-        `http://localhost:8080/api/ai/explain/matchup?${new URLSearchParams(params)}`,
-};
 
 const STAT_TYPES = [
     { key: "pts", label: "PTS", color: "#47e897", glow: "rgba(232,197,71,0.15)" },

@@ -10,17 +10,10 @@ import {
 } from "chart.js";
 import "../matchup.css";
 import "../pvp.css";
+import { API } from "../api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-const API = {
-    playerSearch: (q) =>
-        `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
-    compare: (id1, id2) =>
-        `http://localhost:8080/api/comparison/compare?playerOneApiId=${id1}&playerTwoApiId=${id2}`,
-    explainComparison: (id1, id2) =>
-        `http://localhost:8080/api/ai/explain/comparison?playerOneApiId=${id1}&playerTwoApiId=${id2}`,
-};
 
 function playerHeadshot(id) {
     return id

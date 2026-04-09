@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import NavBar from "../components/Navbar.jsx";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = "http://localhost:8080";
-const teamsUrl = "http://localhost:8080/teams";
+import { API, API_BASE } from "../api";
 
 const RankBadge = ({ rank }) => {
     const colors = rank === 1 ? { bg: "#F6B100", text: "#1a1a2e" }
@@ -103,7 +101,7 @@ export default function NBAStandings() {
     useEffect(() => { fetchStandings(); }, [fetchStandings]);
 
     useEffect(() => {
-        fetch(teamsUrl)
+        fetch(API.teams)
             .then(r => r.json())
             .then(data => setTeams(data.data || data))
             .catch(() => {});

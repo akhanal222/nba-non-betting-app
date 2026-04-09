@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-const API_BASE = "http://localhost:8080";
+import { API_BASE } from "../api";
 
 export default function GameLineupPage() {
     const { state } = useLocation();

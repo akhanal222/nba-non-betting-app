@@ -113,5 +113,23 @@ Create environment variables through the Run button, Edit config:
 
 ---
 
+## Deployment
+
+### Render backend
+- Create a new **Web Service** from this repo
+- Choose **Docker** as the environment
+- Use the repository root as the service root
+- Set these environment variables:
+  - `DB_Password`
+  - `BDL_API_KEY`
+  - `GEMINI_API_KEY`
+- The backend listens on `PORT`, which is provided by Render automatically
+
+### Frontend
+- Deploy `frontend/` separately on Vercel or Netlify
+- Set `VITE_API_BASE_URL` to your Render backend URL
+
+---
+
 
 
