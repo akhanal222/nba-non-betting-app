@@ -1,8 +1,8 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NavBar from "./components/NavBar";
-import PlayerCard from "./components/PlayerCard";
+import NavBar from "./components/Navbar.jsx";
+import PlayerCard from "./components/Playercard.jsx";
 import { API } from "./api";
 
 const UI = {

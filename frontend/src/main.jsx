@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
-import GameLineupPage from './pages/GameLineupPage.jsx'
+import GameLineupPage from './pages/Gamelineuppage.jsx'
 import TeamPlayersPage from './pages/TeamPlayersPage.jsx'
 import TopPlayers from './pages/TopPlayers.jsx'
 import MatchupsDashboard from "./pages/MatchupsDashboard.jsx";

@@ -1,4 +1,4 @@
-import StatBadge from "./StatBadge";
+import StatBadge from "./Statbadge.jsx";
 
 // This is to generate initials if player photo is unavailable
 function getInitials(firstName, lastName) {

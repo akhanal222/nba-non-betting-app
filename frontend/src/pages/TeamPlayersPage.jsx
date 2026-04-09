@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import PlayerCard from "../components/PlayerCard";
+import PlayerCard from "../components/Playercard.jsx";
 import NavBar from "../components/Navbar.jsx";
 import { API, API_BASE } from "../api";
 
