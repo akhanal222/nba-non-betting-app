@@ -11,6 +11,7 @@ export const API = {
   upcomingGames: join("/bdl/games/upcoming?days=2"),
   completedGames: join("/bdl/games/completed?days=2"),
   playerStats: (id, limit) => join(`/stats/player/external/${id}?limit=${limit}`),
+  playerStatsApi: (apiId) => join(`/stats/player/external/${apiId}`),
   recentAnalyze: (params) => join(`/stats/recent/analyze?${new URLSearchParams(params)}`),
   explainRecent: (params) => join(`/api/ai/explain/matchup?${new URLSearchParams(params)}`),
   leaderboard: (statType, season) => join(`/leaderboard/${statType}?season=${season}`),

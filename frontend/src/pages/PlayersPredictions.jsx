@@ -658,7 +658,7 @@ export default function PlayersPredictions() {
         setAiError(null);
 
         try {
-            const preloadStatsRes = await fetch(API.playerStats(playerApiId));
+            const preloadStatsRes = await fetch(API.playerStatsApi(playerApiId));
             if (!preloadStatsRes.ok) {
                 const preloadError = await preloadStatsRes.text();
                 throw new Error(
@@ -679,7 +679,7 @@ export default function PlayersPredictions() {
             setPrediction(predData);
 
             try {
-                const statsRes = await fetch(API.playerStats(playerApiId));
+                const statsRes = await fetch(API.playerStatsApi(playerApiId));
                 if (statsRes.ok) {
                     const statsData = await statsRes.json();
                     const games = Array.isArray(statsData)
