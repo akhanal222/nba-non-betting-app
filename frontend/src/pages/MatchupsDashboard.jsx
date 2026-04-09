@@ -11,7 +11,7 @@ import {
     Legend,
 } from "chart.js";
 import NavBar from "../components/Navbar.jsx";
-import PlayerVsPlayer from "./PlayerVsPlayer.jsx";
+import PlayerVsPlayer from "./Playervsplayer.jsx";
 import "../matchup.css";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
