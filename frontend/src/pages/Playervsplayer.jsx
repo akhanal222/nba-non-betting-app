@@ -18,6 +18,8 @@ const API = {
         `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
     compare: (id1, id2) =>
         `http://localhost:8080/api/comparison/compare?playerOneApiId=${id1}&playerTwoApiId=${id2}`,
+    explainComparison: (id1, id2) =>
+        `http://localhost:8080/api/ai/explain/comparison?playerOneApiId=${id1}&playerTwoApiId=${id2}`,
 };
 
 function playerHeadshot(id) {
@@ -321,6 +323,9 @@ export default function PlayerVsPlayer() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [statView, setStatView] = useState("season");
+    const [aiExplanation, setAiExplanation] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     const idA = playerA?.externalApiId ?? playerA?.playerId;
     const idB = playerB?.externalApiId ?? playerB?.playerId;
@@ -328,7 +333,12 @@ export default function PlayerVsPlayer() {
 
     const compare = async () => {
         if (!canCompare) return;
-        setLoading(true); setError(null); setCompData(null);
+        setLoading(true);
+        setError(null);
+        setCompData(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
         try {
             const res = await fetch(API.compare(idA, idB));
             if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -339,7 +349,34 @@ export default function PlayerVsPlayer() {
         } finally { setLoading(false); }
     };
 
-    const resetResults = () => { setCompData(null); setError(null); };
+    const resetResults = () => {
+        setCompData(null);
+        setError(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
+    };
+
+    const explainComparison = async () => {
+        if (!compData || !idA || !idB) return;
+
+        setAiLoading(true);
+        setAiError(null);
+
+        try {
+            const res = await fetch(API.explainComparison(idA, idB));
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || `Server error ${res.status}`);
+            }
+            setAiExplanation(await res.json());
+        } catch (err) {
+            setAiExplanation(null);
+            setAiError("AI is not available right now.");
+        } finally {
+            setAiLoading(false);
+        }
+    };
 
     const pOne = compData?.playerOne;
     const pTwo = compData?.playerTwo;
@@ -519,6 +556,79 @@ export default function PlayerVsPlayer() {
                                 </p>
                             )}
                         </div>
+
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "12px",
+                                marginTop: "24px",
+                                marginBottom: "20px",
+                                flexWrap: "wrap",
+                            }}
+                        >
+                            <div>
+                                <p className="results-chart__title" style={{ marginBottom: "4px" }}>
+                                    Need an explanation? Try this
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={explainComparison}
+                                disabled={aiLoading}
+                                className={`controls-analyze-btn ${!aiLoading ? "controls-analyze-btn--ready" : "controls-analyze-btn--disabled"}`}
+                            >
+                                {aiLoading ? (
+                                    <span className="controls-analyze-spinner">
+                                        <span className="controls-analyze-spinner__ring" />
+                                        Explaining
+                                    </span>
+                                ) : (
+                                    aiExplanation ? "Refresh Explain" : "Explain"
+                                )}
+                            </button>
+                        </div>
+
+                        {aiError && (
+                            <div className="results-error" style={{ marginBottom: "20px" }}>
+                                <span className="results-error__icon">⚠</span>
+                                <p>{aiError}</p>
+                            </div>
+                        )}
+
+                        {aiExplanation && (
+                            <div
+                                className="results-chart"
+                                style={{
+                                    padding: "20px",
+                                    marginBottom: "24px",
+                                    background: "#0a0e1c",
+                                }}
+                            >
+                                <div className="results-chart__header">
+                                    <p className="results-chart__title">Season View</p>
+                                    <p className="results-chart__subtitle">
+                                        {aiExplanation.cached }
+                                    </p>
+                                </div>
+                                <p style={{ color: "#f4f7ff", lineHeight: 1.7, marginBottom: "16px" }}>
+                                    {aiExplanation.seasonExplanation}
+                                </p>
+                                <div className="results-chart__header">
+                                    <p className="results-chart__title">Career View</p>
+                                </div>
+                                <p style={{ color: "#f4f7ff", lineHeight: 1.7, marginBottom: "16px" }}>
+                                    {aiExplanation.careerExplanation}
+                                </p>
+                                <div className="results-chart__header">
+                                    <p className="results-chart__title">Bottom Line</p>
+                                </div>
+                                <p style={{ color: "#f4f7ff", lineHeight: 1.7, margin: 0 }}>
+                                    {aiExplanation.bottomLine}
+                                </p>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

@@ -19,3 +19,63 @@
 .player-detail-line-input:focus {
     border-color: var(--accent);
 }
+
+.player-detail-ai-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.player-detail-ai-card {
+    border: 1px solid rgba(79, 124, 255, 0.18);
+    border-radius: 16px;
+    background: #0a0e1c;
+    padding: 20px;
+}
+
+.player-detail-ai-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.player-detail-ai-card__label {
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.player-detail-ai-card__meta {
+    color: #c4cee6;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.player-detail-ai-card__body {
+    color: #f4f7ff;
+    font-size: 15px;
+    line-height: 1.8;
+    margin: 0;
+}
+
+.player-detail-ai-empty {
+    border: 1px dashed rgba(79, 124, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+}
+
+.player-detail-ai-empty__title {
+    color: #9aa8c8;
+    font-size: 15px;
+    margin: 0;
+}

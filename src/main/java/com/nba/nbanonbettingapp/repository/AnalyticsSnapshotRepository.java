@@ -14,8 +14,9 @@ public interface AnalyticsSnapshotRepository extends JpaRepository<AnalyticsSnap
      * parameters fingerprint. Used to check if we can return a cached explanation
      * instead of calling Gemini again.
      */
-    Optional<AnalyticsSnapshot> findTopByPlayer_PlayerIdAndMetricTypeOrderByComputedAtDesc(
+    Optional<AnalyticsSnapshot> findTopByPlayer_PlayerIdAndMetricTypeAndParametersOrderByComputedAtDesc(
             Long playerId,
-            String metricType
+            String metricType,
+            String parameters
     );
 }

@@ -58,7 +58,12 @@ public class AiExplanationController {
                 propProjectionService.predict(playerApiId, opponentTeamApiId, statType, line);
 
         AiExplanationResponseDTO explanation =
-                geminiService.explainPropPrediction(playerApiId, prediction, forceRefresh);
+                geminiService.explainPropPrediction(
+                        playerApiId,
+                        opponentTeamApiId,
+                        prediction,
+                        forceRefresh
+                );
 
         return ResponseEntity.ok(explanation);
     }

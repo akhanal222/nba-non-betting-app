@@ -23,6 +23,8 @@ const API = {
         `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
     matchup: (params) =>
         `http://localhost:8080/api/matchup/analyze?${new URLSearchParams(params)}`,
+    explainMatchup: (params) =>
+        `http://localhost:8080/api/ai/explain/matchup?${new URLSearchParams(params)}`,
 };
 
 const STAT_TYPES = [
@@ -386,6 +388,9 @@ export default function MatchupsDashboard() {
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [aiExplanation, setAiExplanation] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     useEffect(() => {
         fetch(API.teams)
@@ -404,7 +409,13 @@ export default function MatchupsDashboard() {
             .finally(() => setPageLoading(false));
     }, []);
 
-    const resetResults = () => { setResults(null); setError(null); };
+    const resetResults = () => {
+        setResults(null);
+        setError(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
+    };
 
     useEffect(() => {
         setStatLine(DEFAULT_STAT_LINES[statType] ?? 0);
@@ -422,7 +433,12 @@ export default function MatchupsDashboard() {
 
     const analyze = async () => {
         if (!canAnalyze) return;
-        setLoading(true); setError(null); setResults(null);
+        setLoading(true);
+        setError(null);
+        setResults(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
         try {
             const res = await fetch(API.matchup({
                 playerApiId: playerA.externalApiId,
@@ -435,6 +451,35 @@ export default function MatchupsDashboard() {
         } catch (err) {
             setError(err.message ?? "Failed to analyze matchup");
         } finally { setLoading(false); }
+    };
+
+    const explainMatchup = async () => {
+        if (!results || !playerA?.externalApiId || !opponentTeam?.externalApiId) return;
+
+        setAiLoading(true);
+        setAiError(null);
+
+        try {
+            const res = await fetch(API.explainMatchup({
+                playerApiId: playerA.externalApiId,
+                opponentApiId: opponentTeam.externalApiId,
+                statLine,
+                limit,
+                includePlayoffs,
+                statType,
+                analysisType: "MATCHUP",
+            }));
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || `Server error ${res.status}`);
+            }
+            setAiExplanation(await res.json());
+        } catch (err) {
+            setAiExplanation(null);
+            setAiError("AI is not available right now.");
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     const selectedStat = STAT_TYPES.find((s) => s.key === statType);
@@ -705,6 +750,69 @@ export default function MatchupsDashboard() {
                                     ))
                                 }
                             </div>
+
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "12px",
+                                    marginTop: "24px",
+                                    marginBottom: "20px",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                <div>
+                                    <p className="results-chart__title" style={{ marginBottom: "4px" }}>
+                                        Need an explanation? Try this
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={explainMatchup}
+                                    disabled={aiLoading}
+                                    className={`controls-analyze-btn ${!aiLoading ? "controls-analyze-btn--ready" : "controls-analyze-btn--disabled"}`}
+                                >
+                                    {aiLoading ? (
+                                        <span className="controls-analyze-spinner">
+                                            <span className="controls-analyze-spinner__ring" />
+                                            Explaining
+                                        </span>
+                                    ) : (
+                                        aiExplanation ? "Refresh Explain" : "Explain"
+                                    )}
+                                </button>
+                            </div>
+
+                            {aiError && (
+                                <div className="results-error" style={{ marginBottom: "20px" }}>
+                                    <span className="results-error__icon">⚠</span>
+                                    <p>{aiError}</p>
+                                </div>
+                            )}
+
+                            {aiExplanation && (
+                                <div
+                                    className="results-chart"
+                                    style={{
+                                        padding: "20px",
+                                        marginBottom: "24px",
+                                        background: "#0a0e1c",
+                                    }}
+                                >
+                                    <div className="results-chart__header">
+                                        <p className="results-chart__title">
+                                            {aiExplanation.analysisType.replaceAll("_", " ")}
+                                        </p>
+                                        <p className="results-chart__subtitle">
+                                            {aiExplanation.cached}
+                                        </p>
+                                    </div>
+                                    <p style={{ color: "#f4f7ff", lineHeight: 1.7, margin: 0 }}>
+                                        {aiExplanation.explanation}
+                                    </p>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
