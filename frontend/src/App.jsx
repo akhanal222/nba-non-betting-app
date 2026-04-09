@@ -1,7 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NavBar from "./components/Navbar";
+import NavBar from "./components/Navbar.jsx";
 import PlayerCard from "./components/Playercard.jsx";
 
 const API = {
