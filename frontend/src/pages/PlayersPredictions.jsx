@@ -12,20 +12,10 @@ import {
 import NavBar from "../components/Navbar.jsx";
 import "../matchup.css";
 import "../prediction.css";
+import { API } from "../api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-const API = {
-    teams: "http://localhost:8080/teams",
-    playerSearch: (q) =>
-        `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
-    playerStats: (apiId) =>
-        `http://localhost:8080/stats/player/external/${apiId}`,
-    predict: (playerApiId, opponentTeamApiId, statType, line) =>
-        `http://localhost:8080/api/props/predict?playerApiId=${playerApiId}&opponentTeamApiId=${opponentTeamApiId}&statType=${statType}&line=${line}`,
-    explainPrediction: (playerApiId, opponentTeamApiId, statType, line) =>
-        `http://localhost:8080/api/ai/explain/prop?playerApiId=${playerApiId}&opponentTeamApiId=${opponentTeamApiId}&statType=${statType}&line=${line}`,
-};
 
 const STAT_TYPES = [
     { value: "pts", label: "Points" },

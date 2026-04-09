@@ -3,14 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./components/Navbar.jsx";
 import PlayerCard from "./components/Playercard.jsx";
-
-const API = {
-  test:           "http://localhost:8080/test",
-  teams:          "http://localhost:8080/teams",
-  playerSearch:   (q) => `http://localhost:8080/api/players/search?q=${encodeURIComponent(q)}`,
-  upcomingGames:  "http://localhost:8080/bdl/games/upcoming?days=2",
-  completedGames: "http://localhost:8080/bdl/games/completed?days=2",
-};
+import { API } from "./api";
 
 const UI = {
   pageBg: "#0b1020",

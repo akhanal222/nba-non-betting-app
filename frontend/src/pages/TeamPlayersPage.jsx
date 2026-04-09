@@ -2,11 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PlayerCard from "../components/Playercard.jsx";
 import NavBar from "../components/Navbar.jsx";
-
-const API_BASE = "http://localhost:8080";
-const API = {
-    teams: "http://localhost:8080/teams",
-};
+import { API, API_BASE } from "../api";
 
 export default function TeamPlayersPage() {
     const { state } = useLocation();
