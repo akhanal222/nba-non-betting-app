@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./components/Navbar.jsx";
 import PlayerCard from "./components/Playercard.jsx";
-import { API } from "./api";
+import { API, DEMO_MODE } from "./api";
 
 const UI = {
   pageBg: "#0b1020",
@@ -69,6 +69,25 @@ function normalizePlayer(player) {
   };
 }
 
+const HOME_DEMO_SNAPSHOT_KEY = "nba-homepage-demo-snapshot";
+
+function readHomepageSnapshot() {
+  try {
+    const raw = localStorage.getItem(HOME_DEMO_SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveHomepageSnapshot(snapshot) {
+  try {
+    localStorage.setItem(HOME_DEMO_SNAPSHOT_KEY, JSON.stringify(snapshot));
+  } catch {
+    // ignore storage failures
+  }
+}
+
 export default function App() {
   const navigate = useNavigate();
 
@@ -90,6 +109,8 @@ export default function App() {
   const [hoveredGame,setHoveredGame]= useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     fetch(API.test).catch(() => {});
 
     fetch(API.teams)
@@ -102,23 +123,73 @@ export default function App() {
               })
               .sort((a, b) => Number(a?.externalApiId ?? a?.teamId) - Number(b?.externalApiId ?? b?.teamId));
 
-          setTeams(filteredTeams);
+          if (!cancelled) setTeams(filteredTeams);
         })
         .catch(() => {});
 
-    // Upcoming
-    setLoadingUpcoming(true);
-    fetch(API.upcomingGames)
-        .then(r => r.json())
-        .then(data => { setUpcomingGames(Array.isArray(data) ? data : data.data || []); setLoadingUpcoming(false); })
-        .catch(() => setLoadingUpcoming(false));
+    const loadGames = async () => {
+      if (DEMO_MODE) {
+        const snapshot = readHomepageSnapshot();
+        if (snapshot?.upcomingGames && snapshot?.completedGames) {
+          if (!cancelled) {
+            setUpcomingGames(snapshot.upcomingGames);
+            setCompletedGames(snapshot.completedGames);
+            setLoadingUpcoming(false);
+            setLoadingCompleted(false);
+          }
+          return;
+        }
+      }
 
-    // Completed
-    setLoadingCompleted(true);
-    fetch(API.completedGames)
-        .then(r => r.json())
-        .then(data => { setCompletedGames(Array.isArray(data) ? data : data.data || []); setLoadingCompleted(false); })
-        .catch(() => setLoadingCompleted(false));
+      if (!cancelled) {
+        setLoadingUpcoming(true);
+        setLoadingCompleted(true);
+      }
+
+      try {
+        const [upcomingRes, completedRes] = await Promise.all([
+          fetch(API.upcomingGames),
+          fetch(API.completedGames),
+        ]);
+
+        const [upcomingData, completedData] = await Promise.all([
+          upcomingRes.json(),
+          completedRes.json(),
+        ]);
+
+        const upcoming = Array.isArray(upcomingData) ? upcomingData : upcomingData.data || [];
+        const completed = Array.isArray(completedData) ? completedData : completedData.data || [];
+
+        if (!cancelled) {
+          setUpcomingGames(upcoming);
+          setCompletedGames(completed);
+        }
+
+        if (DEMO_MODE) {
+          saveHomepageSnapshot({
+            upcomingGames: upcoming,
+            completedGames: completed,
+            savedAt: new Date().toISOString(),
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setUpcomingGames([]);
+          setCompletedGames([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingUpcoming(false);
+          setLoadingCompleted(false);
+        }
+      }
+    };
+
+    loadGames();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
