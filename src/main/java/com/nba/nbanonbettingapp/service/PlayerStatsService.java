@@ -69,11 +69,14 @@ public class PlayerStatsService {
     public List<PlayerGameStatistic> getRecentStats(Long playerId, int limit) {
 
         limit = normalizeLimit(limit);
+        int fetchLimit = determineFetchLimit(limit);
 
         // Try DB first
         List<PlayerGameStatistic> db = statRepository.findByPlayer_PlayerIdOrderByGame_GameDateDesc(
-                playerId, PageRequest.of(0, limit)
+                playerId, PageRequest.of(0, fetchLimit)
         );
+
+        List<PlayerGameStatistic> playableDb = takeRecentPlayableGames(db, limit);
 
         OffsetDateTime lastSync = statRepository
                 .findLatestSyncedAtByPlayerId(playerId)
@@ -83,9 +86,9 @@ public class PlayerStatsService {
                 Duration.between(lastSync, OffsetDateTime.now()).toHours() >= 12;
 
         // If stats are fresh AND we already have enough rows, return DB
-        if (!stale && db.size() >= limit) {
-            triggerAdvancedStatsHook(playerId, db);
-            return db;
+        if (!stale && playableDb.size() >= limit) {
+            triggerAdvancedStatsHook(playerId, playableDb);
+            return playableDb;
         }
 
         // Need to fetch more (or DB empty)
@@ -107,18 +110,19 @@ public class PlayerStatsService {
             cursor = (resp.meta() != null) ? resp.meta().nextCursor() : null;
         } while (cursor != null);
 
-        if (apiStats.isEmpty()) return db;
+        if (apiStats.isEmpty()) return playableDb;
 
-        // Sort newest first and take up to "limit"
+        // Sort newest first, drop DNP/zero-minute games, and keep enough rows to still return the requested limit.
         var sorted = apiStats.stream()
                 .filter(Objects::nonNull)
                 .filter(s -> s.game() != null && s.game().id() != null)
+                .filter(s -> hasMinutesPlayed(s.min()))
                 .sorted(Comparator.comparing((com.nba.nbanonbettingapp.dto.BdlStatDTO s) -> parseLocalDateSafe(s.game().date()))
                         .reversed())
-                .limit(limit)
+                .limit(fetchLimit)
                 .toList();
 
-        // Save stats + games (+ teams) for up to limit games
+        // Save stats + games (+ teams) for the valid recent games we kept.
         OffsetDateTime now = OffsetDateTime.now();
         for (var s : sorted) {
 
@@ -180,10 +184,11 @@ public class PlayerStatsService {
 
         advancedStatsIngestionService.fetchAndUpsert(player.getExternalApiId(), upsertedGameIds);
 
-        // Return again from DB
-        return statRepository.findByPlayer_PlayerIdOrderByGame_GameDateDesc(
-                playerId, PageRequest.of(0, limit)
+        // Return again from DB, but keep only the valid recent games.
+        List<PlayerGameStatistic> refreshedDb = statRepository.findByPlayer_PlayerIdOrderByGame_GameDateDesc(
+                playerId, PageRequest.of(0, fetchLimit)
         );
+        return takeRecentPlayableGames(refreshedDb, limit);
     }
     /**
      * Extracts external game IDs from a stat list and fires the advanced stats ingestion
@@ -234,12 +239,7 @@ public class PlayerStatsService {
 
         // Step 4: Apply DNP filter (zero minutes) and optional postseason filter
         List<PlayerGameStatistic> filteredStats = recentStats.stream()
-                .filter(s -> {
-                    String min = s.getMinutesPlayed();
-                    return min != null && !min.isBlank()
-                            && !min.equals("0") && !min.equals("00")
-                            && !min.equals("0:00") && !min.equals("00:00");
-                })
+                .filter(s -> hasMinutesPlayed(s.getMinutesPlayed()))
                 .filter(s -> includePlayoffs ||
                         s.getGame() == null ||
                         !Boolean.TRUE.equals(s.getGame().getPostseason()))
@@ -296,6 +296,32 @@ public class PlayerStatsService {
     private int normalizeLimit(int limit) {
         if (limit != 5 && limit != 10 && limit != 15) return 5;
         return limit;
+    }
+
+    private int determineFetchLimit(int limit) {
+        return Math.max(limit * 3, 15);
+    }
+
+    private boolean hasMinutesPlayed(PlayerGameStatistic stat) {
+        return stat != null && hasMinutesPlayed(stat.getMinutesPlayed());
+    }
+
+    private boolean hasMinutesPlayed(String minutesPlayed) {
+        if (minutesPlayed == null) return false;
+
+        String min = minutesPlayed.trim();
+        return !min.isEmpty()
+                && !min.equals("0")
+                && !min.equals("00")
+                && !min.equals("0:00")
+                && !min.equals("00:00");
+    }
+
+    private List<PlayerGameStatistic> takeRecentPlayableGames(List<PlayerGameStatistic> stats, int limit) {
+        return stats.stream()
+                .filter(this::hasMinutesPlayed)
+                .limit(limit)
+                .toList();
     }
 
     /**

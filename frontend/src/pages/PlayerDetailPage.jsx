@@ -28,6 +28,55 @@ function logo(nbaTeamId) {
     return `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg`;
 }
 
+function normalizeInjuryRecords(payload) {
+    const rawRecords = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+            ? payload
+            : [];
+
+    return rawRecords.filter(Boolean);
+}
+
+function formatInjuryBadge(record) {
+    const raw = String(
+        record?.status ??
+        record?.injury_status ??
+        record?.state ??
+        record?.description ??
+        ""
+    ).trim();
+
+    if (!raw) return "Injured";
+    return raw.toLowerCase().includes("injur") ? `${raw}` : `${raw}`;
+}
+
+function formatInjuryTooltip(record) {
+    const injuryType = String(
+        record?.description ??
+        record?.details ??
+        record?.reason ??
+        record?.injury ??
+        record?.injury_status ??
+        record?.status ??
+        record?.state ??
+        "Injury details unavailable"
+    ).trim();
+
+    const returnInfo = String(
+        record?.expected_return ??
+        record?.expected_return_date ??
+        record?.return_date ??
+        record?.estimated_return_date ??
+        record?.return_date_estimate ??
+        record?.notes ??
+        record?.comment ??
+        "Return date unavailable"
+    ).trim();
+
+    return { injuryType, returnInfo };
+}
+
 function buildRecentGamesChart(rawStats, statLine) {
     const stats = [...rawStats].reverse();
 
@@ -205,6 +254,8 @@ export default function PlayerDetailPage() {
     const [aiExplanation, setAiExplanation] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState(null);
+    const [injuryRecords, setInjuryRecords] = useState([]);
+    const [injuryLoading, setInjuryLoading] = useState(false);
 
     useEffect(() => {
         fetch(API.teams)
@@ -253,6 +304,37 @@ export default function PlayerDetailPage() {
 
     useEffect(() => {
         if (!resolvedExternalApiId) return;
+
+        let cancelled = false;
+        setInjuryLoading(true);
+
+        fetch(API.playerInjuries(resolvedExternalApiId))
+            .then(async (r) => {
+                if (!r.ok) {
+                    throw new Error(`Injury lookup failed with status ${r.status}`);
+                }
+                return r.json();
+            })
+            .then((data) => {
+                if (cancelled) return;
+                setInjuryRecords(normalizeInjuryRecords(data));
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setInjuryRecords([]);
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setInjuryLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [resolvedExternalApiId]);
+
+    useEffect(() => {
+        if (!resolvedExternalApiId) return;
         const cacheKey = `${resolvedExternalApiId}-${recentGamesLimit}-${statLine}`;
 
         setAiExplanation(null);
@@ -287,6 +369,8 @@ export default function PlayerDetailPage() {
             })
             .finally(() => setAnalysisLoading(false));
     }, [resolvedExternalApiId, statLine, recentGamesLimit, analysisCache]);
+
+    const injuryTooltip = injuryRecords.length > 0 ? formatInjuryTooltip(injuryRecords[0]) : null;
 
     const explainRecentForm = async () => {
         if (!resolvedExternalApiId || !analysisData) return;
@@ -393,8 +477,27 @@ export default function PlayerDetailPage() {
                 </div>
 
                 {/* ── Bio ── */}
-                <div className="border border-[#1a2540] bg-[#0a0e1c] p-6 rounded-[20px] overflow-hidden">
-                    <p className="text-[white] text-xs font-semibold uppercase tracking-widest !mb-4 !mt-3 !ml-2">Player Info</p>
+                <div className="relative overflow-visible border border-[#1a2540] bg-[#0a0e1c] p-6 rounded-[20px]">
+                    <div className="flex items-center justify-between gap-3 !mb-4 !mt-3 !ml-2">
+                        <p className="text-[white] text-xs font-semibold uppercase tracking-widest mb-0">Player Info</p>
+                        {!injuryLoading && injuryTooltip && (
+                            <div className="group relative inline-flex items-center gap-2 px-3 py-1.5  w-fit shadow-[0_0_0_1px_rgba(239,68,68,0.08)] cursor-help z-30 mr-4!">
+                                <span className="text-red-400 text-xs font-black">⚠</span>
+                                <span className="text-red-400 text-[15px] font-semibold uppercase tracking-[0.18em]">
+                                    {formatInjuryBadge(injuryRecords[0])}
+                                </span>
+                                <div className="pointer-events-none absolute right-full top-1/2 mr-3 hidden w-80 -translate-y-1/2 rounded-xl border border-[#263252] bg-[#0f172a] px-5 py-4 text-left text-sm leading-7 text-[#f4f7ff] shadow-[0_16px_35px_rgba(0,0,0,0.45)] group-hover:block z-50">
+                                    <div className="whitespace-normal">
+                                        <span className="font-semibold">Injury:</span> {injuryTooltip.injuryType}
+                                    </div>
+                                    <div className="whitespace-normal mt-1">
+                                        <span className="font-semibold">ETA:</span>{" "}
+                                        <span className="font-bold">{injuryTooltip.returnInfo}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <div className="grid grid-cols-4 gap-4 !ml-4 mb-4!">
                         {[
                             { l: "Position", v: player.position ?? "—" },

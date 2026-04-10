@@ -552,6 +552,10 @@ function LeaderboardCard({ player, onClick, selected }) {
 }
 
 function Stat({ value, label }) {
+    const isGamesPlayed = label === "Game Played This Season";
+    const numericValue = Number(value);
+    const highlightGold = isGamesPlayed && Number.isFinite(numericValue) && numericValue >= 65;
+
     return (
         <div
             style={{
@@ -563,7 +567,7 @@ function Stat({ value, label }) {
                 textAlign: "center",
             }}
         >
-      <span style={{ color: "#9eb8ff", fontWeight: 700, fontSize: "1.2rem", lineHeight: 1.15 }}>
+      <span style={{ color: highlightGold ? "#d4af37" : "#9eb8ff", fontWeight: 700, fontSize: "1.2rem", lineHeight: 1.15 }}>
         {value ?? "—"}
       </span>
             <span

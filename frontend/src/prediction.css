@@ -364,6 +364,8 @@
 .predict-breakdown {
     display: grid;
     gap: 14px;
+    position: relative;
+    overflow: visible;
 }
 
 .predict-breakdown__row,
@@ -376,6 +378,8 @@
 .predict-breakdown__row {
     padding-bottom: 12px;
     border-bottom: 1px solid #14171f;
+    position: relative;
+    overflow: visible;
 }
 
 .predict-breakdown__label,
@@ -383,6 +387,49 @@
 .predict-breakdown__total-label,
 .predict-breakdown__total-value {
     color: var(--text-primary);
+}
+
+.predict-breakdown__label {
+    cursor: pointer;
+}
+
+.predict-breakdown__label-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: help;
+}
+
+.predict-breakdown__tooltip {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    min-width: 220px;
+    max-width: 280px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1px solid #263252;
+    color: var(--text-primary);
+    font-size: 12px;
+    line-height: 1.45;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    pointer-events: none;
+    z-index: 30;
+}
+
+.predict-breakdown__label-wrap:hover .predict-breakdown__tooltip,
+.predict-breakdown__label-wrap:focus-within .predict-breakdown__tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .predict-breakdown__total {

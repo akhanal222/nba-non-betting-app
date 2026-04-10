@@ -223,6 +223,17 @@ function PredictionRecentGameRow({ game, statType, line, index }) {
     );
 }
 
+function BreakdownLabel({ children, tip }) {
+    return (
+        <span className="predict-breakdown__label-wrap">
+            <span className="predict-breakdown__label">{children}</span>
+            <span className="predict-breakdown__tooltip" role="tooltip">
+                {tip}
+            </span>
+        </span>
+    );
+}
+
 function buildDistributionChartData(prediction) {
     const proj = prediction.projectedValue;
     const std = prediction.stdDev || 1;
@@ -1046,25 +1057,25 @@ export default function PlayersPredictions() {
                                     </p>
 
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="Estimated stat rate per minute from recent games, weighted toward newer performances.">
                                             Per Min Rate (EWMA)
-                                        </span>
+                                        </BreakdownLabel>
                                         <span className="predict-breakdown__value">
                                             {prediction.ewmaPerMinute.toFixed(3)}
                                         </span>
                                     </div>
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="Expected minutes played based on role, matchup, and recent usage.">
                                             Proj. Minutes
-                                        </span>
+                                        </BreakdownLabel>
                                         <span className="predict-breakdown__value">
                                             {prediction.projectedMinutes.toFixed(1)}
                                         </span>
                                     </div>
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="Adjusts the projection up or down based on game pace.">
                                             Pace Adjustment
-                                        </span>
+                                        </BreakdownLabel>
                                         <span
                                             className={`predict-breakdown__value ${prediction.paceAdjustment >= 1 ? "predict-breakdown__value--positive" : "predict-breakdown__value--negative"}`}
                                         >
@@ -1072,9 +1083,9 @@ export default function PlayersPredictions() {
                                         </span>
                                     </div>
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="Adjusts the projection up or down based on how tough the opponent is.">
                                             Opponent Adjustment
-                                        </span>
+                                        </BreakdownLabel>
                                         <span
                                             className={`predict-breakdown__value ${prediction.opponentAdjustment >= 1 ? "predict-breakdown__value--positive" : "predict-breakdown__value--negative"}`}
                                         >
@@ -1082,9 +1093,9 @@ export default function PlayersPredictions() {
                                         </span>
                                     </div>
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="Adjusts the projection for extra rest, back-to-backs, or fatigue.">
                                             Rest Adjustment
-                                        </span>
+                                        </BreakdownLabel>
                                         <span
                                             className={`predict-breakdown__value ${prediction.restAdjustment >= 1 ? "predict-breakdown__value--positive" : "predict-breakdown__value--negative"}`}
                                         >
@@ -1092,9 +1103,9 @@ export default function PlayersPredictions() {
                                         </span>
                                     </div>
                                     <div className="predict-breakdown__row">
-                                        <span className="predict-breakdown__label">
+                                        <BreakdownLabel tip="How much the projection can naturally vary from game to game.">
                                             Std Deviation
-                                        </span>
+                                        </BreakdownLabel>
                                         <span className="predict-breakdown__value">
                                             {prediction.stdDev.toFixed(2)}
                                         </span>

@@ -80,6 +80,11 @@ public class BalldontlieController {
     public BdlResponseDTO<PlayerWithImageDTO> getPlayersByTeam(@PathVariable Long id) {
         return service.getPlayersByTeamId(id);
     }
+
+    @GetMapping("/players/{id}/injuries")
+    public JsonNode getPlayerInjuries(@PathVariable Long id) {
+        return service.getPlayerInjuries(id);
+    }
     // This is the endpoint for getting the top 20 season leaders for a specific stat type and season
     //http:localhost:8080/bdl/leaders/top20?statType=pts&season=2025
     @GetMapping("/leaders/top20")

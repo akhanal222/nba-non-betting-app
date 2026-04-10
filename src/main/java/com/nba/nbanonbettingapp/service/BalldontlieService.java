@@ -581,4 +581,15 @@ public class BalldontlieService {
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
+
+    public JsonNode getPlayerInjuries(Long playerApiId) {
+        return rootClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1/player_injuries")
+                        .queryParam("player_ids[]", playerApiId)
+                        .queryParam("per_page", 100)
+                        .build())
+                .retrieve()
+                .body(JsonNode.class);
+    }
 }
