@@ -10,7 +10,9 @@ export const API = {
   teams: join("/teams"),
   playerSearch: (q) => join(`/api/players/search?q=${encodeURIComponent(q)}`),
   playerInjuries: (id) => join(`/bdl/players/${id}/injuries`),
-  upcomingGames: join("/bdl/games/upcoming?days=2"),
+  // upcomingGames: join("/bdl/games/upcoming?days=2"),
+  upcomingGames: join("/bdl/games/completed?days=13"), // This is for the Demo Presentation
+
   completedGames: join("/bdl/games/completed?days=2"),
   playerStats: (id, limit) => join(`/stats/player/external/${id}?limit=${limit}`),
   playerStatsApi: (apiId) => join(`/stats/player/external/${apiId}`),

@@ -40,7 +40,8 @@ function formatGameTime(status) {
   if (!status) return "TBD";
 
   const gameDate = new Date(status);
-  if (Number.isNaN(gameDate.getTime())) return "Live";
+  // if (Number.isNaN(gameDate.getTime())) return "Live";
+  if (Number.isNaN(gameDate.getTime())) return "";
 
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
