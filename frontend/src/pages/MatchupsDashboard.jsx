@@ -47,7 +47,7 @@ const DEFAULT_STAT_LINES = {
     pr:  32.5,
     pa:  30.5,
     ra:  12.5,
-    pra: 38.5,
+    pra: 30.5,
 };
 
 function playerHeadshot(id) {
