@@ -2,6 +2,42 @@
 
 Live website: https://nba-non-betting-app.vercel.app/
 
+---
+
+## Deployment
+
+### Render backend
+- Create a new **Web Service** from this repo
+- Choose **Docker** as the environment
+- Use the repository root as the service root
+- Set these environment variables:
+  - `DB_Password`
+  - `BDL_API_KEY`
+  - `GEMINI_API_KEY`
+- The backend listens on `PORT`, which is provided by Render automatically
+
+### Frontend
+- Deploy `frontend/` separately on Vercel or Netlify
+- Set `VITE_API_BASE_URL` to your Render backend URL
+
+---
+
+## Architecture Overview
+
+#### Application flow:
+
+##### Frontend (React + Vite)  
+→ REST Controllers (Spring Boot)  
+→ Service Layer  
+→ JPA Repositories  
+→ Neon PostgreSQL Database
+
+#### External Data Flow:
+
+##### Balldontlie API  
+→ Backend  
+→ Database
+
 ## Setup Instructions
 
 ### Environment Variables
@@ -71,42 +107,6 @@ Database Schema link (Diagram) :
    ```python
     https://drive.google.com/file/d/1coaCfPUfVlGbc75deqzRQlqomIR0r3jX/view?usp=sharing
    ```
-
-
-## Architecture Overview
-
-#### Application flow:
-
-##### Frontend (React + Vite)  
-→ REST Controllers (Spring Boot)  
-→ Service Layer  
-→ JPA Repositories  
-→ Neon PostgreSQL Database
-
-#### External Data Flow:
-
-##### Balldontlie API  
-→ Backend  
-→ Database
-
----
-
-## Deployment
-
-### Render backend
-- Create a new **Web Service** from this repo
-- Choose **Docker** as the environment
-- Use the repository root as the service root
-- Set these environment variables:
-  - `DB_Password`
-  - `BDL_API_KEY`
-  - `GEMINI_API_KEY`
-- The backend listens on `PORT`, which is provided by Render automatically
-
-### Frontend
-- Deploy `frontend/` separately on Vercel or Netlify
-- Set `VITE_API_BASE_URL` to your Render backend URL
-
 ---
 
 ## Week 2: Data Ingestion from External api
