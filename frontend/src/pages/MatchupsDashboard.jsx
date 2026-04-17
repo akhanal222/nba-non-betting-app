@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -54,6 +54,29 @@ function playerHeadshot(id) {
     return id
         ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
         : null;
+}
+
+function normalizePrefillPlayer(player) {
+    if (!player) return null;
+
+    return {
+        playerId: player?.playerId ?? player?.externalApiId ?? null,
+        externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+        firstName: player?.firstName ?? "",
+        lastName: player?.lastName ?? "",
+        position: player?.position ?? null,
+        nbaPlayerId: player?.nbaPlayerId ?? null,
+        team: {
+            abbreviation: player?.team?.abbreviation ?? null,
+            teamName: player?.team?.teamName ?? null,
+            city: player?.team?.city ?? null,
+            conference: player?.team?.conference ?? null,
+            division: player?.team?.division ?? null,
+            nbaTeamId: player?.team?.nbaTeamId ?? null,
+            externalApiId: player?.team?.externalApiId ?? null,
+            teamId: player?.team?.teamId ?? null,
+        },
+    };
 }
 // Chart settings
 function buildMatchupChartData(games, statLine, statLabel, statColor) {
@@ -369,6 +392,7 @@ export default function MatchupsDashboard() {
     const [pageLoading, setPageLoading] = useState(true);
     const [activePage, setActivePage] = useState("MATCHUPS");
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState("team"); // "team" | "player"
 
     const [playerA, setPlayerA] = useState(null);
@@ -383,6 +407,8 @@ export default function MatchupsDashboard() {
     const [aiExplanation, setAiExplanation] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState(null);
+
+    const prefillPlayer = normalizePrefillPlayer(location.state?.prefillPlayer);
 
     useEffect(() => {
         fetch(API.teams)
@@ -408,6 +434,29 @@ export default function MatchupsDashboard() {
         setAiLoading(false);
         setAiError(null);
     };
+
+    useEffect(() => {
+        const tab = new URLSearchParams(location.search).get("tab");
+        if (tab === "team" || tab === "player") {
+            setActiveTab(tab);
+        }
+    }, [location.search]);
+
+    useEffect(() => {
+        const prefillId = prefillPlayer?.externalApiId ?? prefillPlayer?.playerId;
+        if (!prefillId) return;
+
+        setPlayerA((current) => {
+            const currentId = current?.externalApiId ?? current?.playerId;
+            return currentId === prefillId ? current : prefillPlayer;
+        });
+        setOpponentTeam(null);
+        setResults(null);
+        setError(null);
+        setAiExplanation(null);
+        setAiLoading(false);
+        setAiError(null);
+    }, [prefillPlayer?.externalApiId, prefillPlayer?.playerId]);
 
     useEffect(() => {
         setStatLine(DEFAULT_STAT_LINES[statType] ?? 0);
@@ -811,7 +860,7 @@ export default function MatchupsDashboard() {
                     </>
             )}
                 {activeTab === "player" && (
-                    <PlayerVsPlayer />
+                    <PlayerVsPlayer initialPlayerA={prefillPlayer ?? playerA} />
                 )}
         </div>
             )}

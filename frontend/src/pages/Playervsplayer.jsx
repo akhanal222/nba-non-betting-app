@@ -309,7 +309,7 @@ const STAT_ROWS = [
     { label: "GP", key: "gamesPlayed" },
 ];
 
-export default function PlayerVsPlayer() {
+export default function PlayerVsPlayer({ initialPlayerA = null }) {
     const [playerA, setPlayerA] = useState(null);
     const [playerB, setPlayerB] = useState(null);
     const [compData, setCompData] = useState(null);
@@ -349,6 +349,17 @@ export default function PlayerVsPlayer() {
         setAiLoading(false);
         setAiError(null);
     };
+
+    useEffect(() => {
+        const incomingId = initialPlayerA?.externalApiId ?? initialPlayerA?.playerId;
+        if (!incomingId) return;
+
+        setPlayerA((current) => {
+            const currentId = current?.externalApiId ?? current?.playerId;
+            return currentId === incomingId ? current : initialPlayerA;
+        });
+        resetResults();
+    }, [initialPlayerA?.externalApiId, initialPlayerA?.playerId]);
 
     const explainComparison = async () => {
         if (!compData || !idA || !idB) return;

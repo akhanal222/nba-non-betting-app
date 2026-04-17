@@ -4,6 +4,35 @@ import PlayerCard from "../components/Playercard.jsx";
 import NavBar from "../components/Navbar.jsx";
 import { API, API_BASE } from "../api";
 
+function getPlayerKey(player) {
+    return String(
+        player?.playerId ??
+        player?.externalApiId ??
+        `${player?.firstName ?? ""}-${player?.lastName ?? ""}`
+    );
+}
+
+function toPrefillPlayer(player) {
+    return {
+        playerId: player?.playerId ?? player?.externalApiId ?? null,
+        externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+        firstName: player?.firstName ?? "",
+        lastName: player?.lastName ?? "",
+        position: player?.position ?? null,
+        nbaPlayerId: player?.nbaPlayerId ?? null,
+        team: {
+            abbreviation: player?.team?.abbreviation ?? null,
+            teamName: player?.team?.teamName ?? null,
+            city: player?.team?.city ?? null,
+            conference: player?.team?.conference ?? null,
+            division: player?.team?.division ?? null,
+            nbaTeamId: player?.team?.nbaTeamId ?? null,
+            externalApiId: player?.team?.externalApiId ?? null,
+            teamId: player?.team?.teamId ?? null,
+        },
+    };
+}
+
 export default function TeamPlayersPage() {
     const { state } = useLocation();
     const navigate = useNavigate();
@@ -14,6 +43,15 @@ export default function TeamPlayersPage() {
     const [error, setError] = useState(null);
     const [activePage, setActivePage] = useState(null);
     const [teams, setTeams] = useState([])
+    const [openComparePlayerId, setOpenComparePlayerId] = useState(null);
+
+    const handleCompareSelect = (player, mode) => {
+        const tab = mode === "player" ? "player" : "team";
+        navigate(`/matchups?tab=${tab}`, {
+            state: { prefillPlayer: toPrefillPlayer(player) },
+        });
+        setOpenComparePlayerId(null);
+    };
 
     useEffect(() => {
         fetch(API.teams)
@@ -30,6 +68,7 @@ export default function TeamPlayersPage() {
             .then(r => r.json())
             .then(data => {
                 setTeamPlayers(Array.isArray(data.data) ? data.data : data);
+                setOpenComparePlayerId(null);
                 setLoading(false);
             })
             .catch(err => {
@@ -117,8 +156,8 @@ export default function TeamPlayersPage() {
                             <div className="grid grid-cols-4 gap-7 w-fit ">
                             {teamPlayers.map((player) => (
                                 <div key={player.id} className="w-[265px] ">
-                                <PlayerCard
-                                    player={{
+                                {(() => {
+                                    const cardPlayer = {
                                         playerId: player.id,
                                         externalApiId: player.externalApiId ?? player.id,
                                         firstName: player.firstName,
@@ -138,7 +177,11 @@ export default function TeamPlayersPage() {
                                             division: team.division,
                                             nbaTeamId:team.nbaTeamId,
                                         },
-                                    }}
+                                    };
+
+                                    return (
+                                <PlayerCard
+                                    player={cardPlayer}
                                     selected={false}
                                     onAnalyze={(p) => {
                                         // Trigger background search and wait for completion before navigating
@@ -153,7 +196,17 @@ export default function TeamPlayersPage() {
                                                 navigate(`/players/${p.playerId}`, { state: { player: p } });
                                             });
                                     }}
+                                    compareOpen={openComparePlayerId === getPlayerKey(cardPlayer)}
+                                    onToggleCompare={(p) =>
+                                        setOpenComparePlayerId((current) => {
+                                            const nextKey = getPlayerKey(p);
+                                            return current === nextKey ? null : nextKey;
+                                        })
+                                    }
+                                    onCompareSelect={handleCompareSelect}
                                 />
+                                    );
+                                })()}
                                 </div>
                             ))}
                         </div>

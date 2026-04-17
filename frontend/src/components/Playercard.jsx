@@ -5,7 +5,7 @@ function getInitials(firstName, lastName) {
   return `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
 }
 
-export default function PlayerCard({ player, onAnalyze, selected }) {
+export default function PlayerCard({ player, onAnalyze, selected, compareOpen = false, onToggleCompare, onCompareSelect }) {
   const initials = getInitials(player.firstName, player.lastName);
 
   return (
@@ -17,6 +17,7 @@ export default function PlayerCard({ player, onAnalyze, selected }) {
       display: "flex",
       flexDirection: "column",
       gap: 10,
+      height: "100%",
       cursor: "pointer",
       boxShadow: selected ? "0 0 24px rgba(93, 132, 255, 0.28), inset 0 0 0 1px rgba(93, 132, 255, 0.15)" : "none",
       transition: "border 0.2s, box-shadow 0.2s",
@@ -73,42 +74,116 @@ export default function PlayerCard({ player, onAnalyze, selected }) {
         <StatBadge value={player.jerseyNumber} label="#" />
       </div>
 
-       {/* Button to open detailed analysis for the player */}
-      <button
-        onClick={() => onAnalyze(player)}
-        style={{
-          background: selected ? "var(--accent)" : "var(--bg-surface-2)",
-          border: selected ? "none" : `1px solid var(--border-default)`,
-          color: selected ? "var(--bg-page)" : "var(--text-primary)",
-          borderRadius:8,
-          padding:"12px 0",
-          fontSize:"1rem",
-          letterSpacing:"0.08em",
-          fontWeight:600,
-          cursor:"pointer",
-          width:"100%",
-          transition: "all 0.2s",
-          fontFamily:"inherit",
-        }}
-        onMouseEnter={e => {
-          if (!selected) {
-            e.currentTarget.style.background = "var(--bg-surface)";
-            e.currentTarget.style.borderColor = "var(--accent)";
-            e.currentTarget.style.color = "var(--text-primary)";
-            e.currentTarget.style.boxShadow = "0 6px 16px rgba(93, 132, 255, 0.15)";
-          }
-        }}
-        onMouseLeave={e => {
-          if (!selected) {
-            e.currentTarget.style.background = "var(--bg-surface-2)";
-            e.currentTarget.style.borderColor = "var(--border-default)";
-            e.currentTarget.style.color = "var(--text-primary)";
-            e.currentTarget.style.boxShadow = "none";
-          }
-        }}
-      >
-       Detail
-      </button>
+      <div style={{ display: "grid", gap: 10, marginTop: "auto", position: "relative" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <button
+            onClick={() => onAnalyze(player)}
+            style={{
+              background: selected ? "var(--accent)" : "var(--bg-surface-2)",
+              border: selected ? "none" : `1px solid var(--border-default)`,
+              color: selected ? "var(--bg-page)" : "var(--text-primary)",
+              borderRadius:8,
+              padding:"12px 0",
+              fontSize:"1rem",
+              letterSpacing:"0.08em",
+              fontWeight:600,
+              cursor:"pointer",
+              width:"100%",
+              transition: "all 0.2s",
+              fontFamily:"inherit",
+            }}
+            onMouseEnter={e => {
+              if (!selected) {
+                e.currentTarget.style.background = "var(--bg-surface)";
+                e.currentTarget.style.borderColor = "var(--accent)";
+                e.currentTarget.style.color = "var(--text-primary)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(93, 132, 255, 0.15)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (!selected) {
+                e.currentTarget.style.background = "var(--bg-surface-2)";
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.color = "var(--text-primary)";
+                e.currentTarget.style.boxShadow = "none";
+              }
+            }}
+          >
+            Detail
+          </button>
+
+          <button
+            onClick={() => onToggleCompare?.(player)}
+            style={{
+              background: compareOpen ? "var(--accent)" : "var(--bg-surface-2)",
+              border: `1px solid var(--border-default)`,
+              color: "var(--text-primary)",
+              borderRadius:8,
+              padding:"12px 0",
+              fontSize:"1rem",
+              letterSpacing:"0.08em",
+              fontWeight:600,
+              cursor:"pointer",
+              width:"100%",
+              transition: "all 0.2s",
+              fontFamily:"inherit",
+            }}
+          >
+            Compare
+          </button>
+        </div>
+
+        {compareOpen ? (
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              left: 0,
+              right: 0,
+              zIndex: 15,
+              display: "grid",
+              gap: 8,
+              padding: 10,
+              borderRadius: 10,
+              border: "1px solid var(--border-default)",
+              background: "var(--bg-surface)",
+            }}
+          >
+            <button
+              onClick={() => onCompareSelect?.(player, "player")}
+              style={{
+                background: "var(--bg-surface-2)",
+                border: "1px solid var(--border-default)",
+                color: "var(--text-primary)",
+                borderRadius: 8,
+                padding: "10px 12px",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              Player vs Player
+            </button>
+            <button
+              onClick={() => onCompareSelect?.(player, "team")}
+              style={{
+                background: "var(--bg-surface-2)",
+                border: "1px solid var(--border-default)",
+                color: "var(--text-primary)",
+                borderRadius: 8,
+                padding: "10px 12px",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              Player vs Team
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

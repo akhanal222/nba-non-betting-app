@@ -71,6 +71,35 @@ function normalizePlayer(player) {
   };
 }
 
+function getPlayerKey(player) {
+  return String(
+    player?.playerId ??
+    player?.externalApiId ??
+    `${player?.firstName ?? ""}-${player?.lastName ?? ""}`
+  );
+}
+
+function toPrefillPlayer(player) {
+  return {
+    playerId: player?.playerId ?? player?.externalApiId ?? null,
+    externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+    firstName: player?.firstName ?? "",
+    lastName: player?.lastName ?? "",
+    position: player?.position ?? null,
+    nbaPlayerId: player?.nbaPlayerId ?? null,
+    team: {
+      abbreviation: player?.team?.abbreviation ?? null,
+      teamName: player?.team?.teamName ?? null,
+      city: player?.team?.city ?? null,
+      conference: player?.team?.conference ?? null,
+      division: player?.team?.division ?? null,
+      nbaTeamId: player?.team?.nbaTeamId ?? null,
+      externalApiId: player?.team?.externalApiId ?? null,
+      teamId: player?.team?.teamId ?? null,
+    },
+  };
+}
+
 const HOME_DEMO_SNAPSHOT_KEY = "nba-homepage-demo-snapshot";
 
 function readHomepageSnapshot() {
@@ -99,6 +128,7 @@ export default function App() {
   const [players,setPlayers]= useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [openComparePlayerId, setOpenComparePlayerId] = useState(null);
   const [loadingPlayers,setLoadingPlayers] = useState(false);
   const [hasSearched,setHasSearched] = useState(false);
 
@@ -226,6 +256,7 @@ export default function App() {
     setLoadingPlayers(true);
     setHasSearched(true);
     setShowSuggestions(false);
+    setOpenComparePlayerId(null);
     fetch(API.playerSearch(query))
         .then(r => r.json())
         .then(data => {
@@ -242,6 +273,15 @@ export default function App() {
     setHasSearched(true);
     setShowSuggestions(false);
     setSuggestions([]);
+    setOpenComparePlayerId(null);
+  };
+
+  const handleCompareSelect = (player, mode) => {
+    const tab = mode === "player" ? "player" : "team";
+    navigate(`/matchups?tab=${tab}`, {
+      state: { prefillPlayer: toPrefillPlayer(player) },
+    });
+    setOpenComparePlayerId(null);
   };
 
   const filteredPlayers = players;
@@ -397,6 +437,14 @@ export default function App() {
                         player={player}
                         selected={false}
                         onAnalyze={(p) => navigate(`/players/${p.playerId}`, { state: { player: p } })}
+                        compareOpen={openComparePlayerId === getPlayerKey(player)}
+                        onToggleCompare={(p) =>
+                          setOpenComparePlayerId((current) => {
+                            const nextKey = getPlayerKey(p);
+                            return current === nextKey ? null : nextKey;
+                          })
+                        }
+                        onCompareSelect={handleCompareSelect}
                     />
                 ))}
               </div>

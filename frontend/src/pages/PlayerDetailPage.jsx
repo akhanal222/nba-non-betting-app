@@ -28,6 +28,27 @@ function logo(nbaTeamId) {
     return `https://cdn.nba.com/logos/nba/${nbaTeamId}/primary/L/logo.svg`;
 }
 
+function toPrefillPlayer(player) {
+    return {
+        playerId: player?.playerId ?? player?.externalApiId ?? null,
+        externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+        firstName: player?.firstName ?? "",
+        lastName: player?.lastName ?? "",
+        position: player?.position ?? null,
+        nbaPlayerId: player?.nbaPlayerId ?? null,
+        team: {
+            abbreviation: player?.team?.abbreviation ?? null,
+            teamName: player?.team?.teamName ?? null,
+            city: player?.team?.city ?? null,
+            conference: player?.team?.conference ?? null,
+            division: player?.team?.division ?? null,
+            nbaTeamId: player?.team?.nbaTeamId ?? null,
+            externalApiId: player?.team?.externalApiId ?? null,
+            teamId: player?.team?.teamId ?? null,
+        },
+    };
+}
+
 function normalizeInjuryRecords(payload) {
     const rawRecords = Array.isArray(payload?.data)
         ? payload.data
@@ -256,6 +277,15 @@ export default function PlayerDetailPage() {
     const [aiError, setAiError] = useState(null);
     const [injuryRecords, setInjuryRecords] = useState([]);
     const [injuryLoading, setInjuryLoading] = useState(false);
+    const [compareOpen, setCompareOpen] = useState(false);
+
+    const handleCompareSelect = (mode) => {
+        const tab = mode === "player" ? "player" : "team";
+        navigate(`/matchups?tab=${tab}`, {
+            state: { prefillPlayer: toPrefillPlayer(player) },
+        });
+        setCompareOpen(false);
+    };
 
     useEffect(() => {
         fetch(API.teams)
@@ -427,14 +457,47 @@ export default function PlayerDetailPage() {
             />
             <div className="player-detail-layout px-6 py-6 flex flex-col gap-5">
 
-                {/* Back */}
-                <button onClick={() => navigate(-1)}
-                className="bg-transparent! flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] text-sm transition-colors w-fit mt-10!">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    Back
-                </button>
+                {/* Back / Compare */}
+                <div className="flex items-center justify-between mt-10!">
+                    <button onClick={() => navigate(-1)}
+                    className="bg-transparent! flex items-center gap-1.5 text-[white] hover:text-[#4f7cff] transition-colors w-fit">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Back
+                    </button>
+
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setCompareOpen((open) => !open)}
+                            className={`px-4 py-2 rounded-md border border-white! text-white text-sm font-semibold transition-colors ${
+                                compareOpen ? "bg-[#4f7cff]!" : "bg-[#0f1629] hover:bg-[#4f7cff]!"
+                            }`}
+                        >
+                            Compare
+                        </button>
+
+                        {compareOpen ? (
+                            <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-48 border border-[#2c395c] bg-[#0f1629]  rounded-md p-2 flex flex-col gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleCompareSelect("player")}
+                                    className="text-left px-3 py-2 rounded-md border border-[white]! bg-[#1b2644] text-white text-sm font-semibold hover:bg-[#4f7cff]! transition-colors"
+                                >
+                                    Player vs Player
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCompareSelect("team")}
+                                    className="text-left px-3 py-2 rounded-md border border-[white]! bg-[#1b2644] text-white text-sm font-semibold hover:bg-[#4f7cff]! transition-colors"
+                                >
+                                    Player vs Team
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
 
                 {/* ── Hero ── */}
                 <div className="relative overflow-hidden border border-[#1a2540] bg-[#0a0e1c] min-h-[280px] flex items-end rounded-[20px]">

@@ -33,6 +33,32 @@ const isHotPlayer = (player) => {
     return seasonAvg !== null && last5Avg !== null && last5Avg > seasonAvg;
 };
 
+const getPlayerKey = (player) =>
+    String(
+        player?.playerId ??
+        player?.externalApiId ??
+        `${player?.firstName ?? ""}-${player?.lastName ?? ""}`
+    );
+
+const toPrefillPlayer = (player) => ({
+    playerId: player?.playerId ?? player?.externalApiId ?? null,
+    externalApiId: player?.externalApiId ?? player?.playerId ?? null,
+    firstName: player?.firstName ?? "",
+    lastName: player?.lastName ?? "",
+    position: player?.position ?? null,
+    nbaPlayerId: player?.nbaPlayerId ?? null,
+    team: {
+        abbreviation: player?.team?.abbreviation ?? null,
+        teamName: player?.team?.teamName ?? null,
+        city: player?.team?.city ?? null,
+        conference: player?.team?.conference ?? null,
+        division: player?.team?.division ?? null,
+        nbaTeamId: player?.team?.nbaTeamId ?? null,
+        externalApiId: player?.team?.externalApiId ?? null,
+        teamId: player?.team?.teamId ?? null,
+    },
+});
+
 export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
     const [topPlayers, setTopPlayers] = useState([]);
@@ -45,6 +71,15 @@ export default function TopPlayers() {
     const [q, setQ] = useState("");
     const [statType, setStatType] = useState("pts");
     const [showSearchCards, setShowSearchCards] = useState(false);
+    const [openComparePlayerId, setOpenComparePlayerId] = useState(null);
+
+    const handleCompareSelect = (player, mode) => {
+        const tab = mode === "player" ? "player" : "team";
+        navigate(`/matchups?tab=${tab}`, {
+            state: { prefillPlayer: toPrefillPlayer(player) },
+        });
+        setOpenComparePlayerId(null);
+    };
 
     const resolveTeamByName = (teamName) => {
         if (!teamName) return null;
@@ -163,6 +198,7 @@ export default function TopPlayers() {
                     setPlayers(enrichedPlayers);
                     setTopPlayers(enrichedPlayers);
                     setShowSearchCards(false);
+                    setOpenComparePlayerId(null);
                     setLoading(false);
                 }
             } catch (error) {
@@ -251,6 +287,7 @@ export default function TopPlayers() {
 
             setPlayers(mappedPlayers);
             setShowSearchCards(true);
+            setOpenComparePlayerId(null);
         } catch (error) {
             console.error("Failed to search players:", error);
             setPlayers([]);
@@ -290,6 +327,7 @@ export default function TopPlayers() {
         setShowSuggestions(false);
         setSuggestions([]);
         setShowSearchCards(true);
+        setOpenComparePlayerId(null);
     };
 
     return (
@@ -433,6 +471,14 @@ export default function TopPlayers() {
                                     player={player}
                                     selected={false}
                                     onAnalyze={(p) => navigate(`/players/${p.playerId}`, { state: { player: p } })}
+                                    compareOpen={openComparePlayerId === getPlayerKey(player)}
+                                    onToggleCompare={(p) =>
+                                        setOpenComparePlayerId((current) => {
+                                            const nextKey = getPlayerKey(p);
+                                            return current === nextKey ? null : nextKey;
+                                        })
+                                    }
+                                    onCompareSelect={handleCompareSelect}
                                 />
                             ) : (
                                 <LeaderboardCard
@@ -441,6 +487,14 @@ export default function TopPlayers() {
                                     onClick={(p) =>
                                         navigate(`/players/${p.playerId}`, { state: { player: p } })
                                     }
+                                    compareOpen={openComparePlayerId === getPlayerKey(player)}
+                                    onToggleCompare={(p) =>
+                                        setOpenComparePlayerId((current) => {
+                                            const nextKey = getPlayerKey(p);
+                                            return current === nextKey ? null : nextKey;
+                                        })
+                                    }
+                                    onCompareSelect={handleCompareSelect}
                                 />
                             )
                         ))}
@@ -452,7 +506,7 @@ export default function TopPlayers() {
     );
 }
 
-function LeaderboardCard({ player, onClick, selected }) {
+function LeaderboardCard({ player, onClick, selected, compareOpen, onToggleCompare, onCompareSelect }) {
     const [imgError, setImgError] = useState(false);
     const [hotPhase, setHotPhase] = useState("animating");
     const initials = `${player.firstName?.[0] ?? ""}${player.lastName?.[0] ?? ""}`.toUpperCase();
@@ -497,6 +551,8 @@ function LeaderboardCard({ player, onClick, selected }) {
                 flexDirection: "column",
                 gap: 12,
                 height: "100%",
+                overflow: compareOpen ? "visible" : "hidden",
+                zIndex: compareOpen ? 40 : 1,
                 boxShadow: selected ? "0 0 18px #4f7cff44" : "none",
                 transition: "background-color 320ms ease, border-color 320ms ease, box-shadow 320ms ease",
             }}
@@ -520,7 +576,7 @@ function LeaderboardCard({ player, onClick, selected }) {
                     <span
                         className="leaderboard-card__hot-emoji"
                         aria-label="hot player"
-                        style={{ fontSize: "1.15rem" }}
+                        style={{ fontSize: "1.3rem" }}
                     >
                         🔥
                     </span>
@@ -588,24 +644,95 @@ function LeaderboardCard({ player, onClick, selected }) {
                 <Stat value={player.gamesPlayed} label="Game Played This Season" />
             </div>
 
-            <button
-                onClick={() => onClick(player)}
-                style={{
-                    background: selected ? UI.accent : "#1b2644",
-                    border: selected ? "none" : `1px solid ${UI.border}`,
-                    color: UI.textPrimary,
-                    borderRadius: 8,
-                    padding: "12px 0",
-                    fontSize: "1rem",
-                    letterSpacing: "0.08em",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    width: "100%",
-                    marginTop: "auto",
-                }}
-            >
-                Detail
-            </button>
+            <div style={{ display: "grid", gap: 10, marginTop: "auto", position: "relative" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <button
+                        onClick={() => onClick(player)}
+                        style={{
+                            background: selected ? UI.accent : "#1b2644",
+                            border: selected ? "none" : `1px solid ${UI.border}`,
+                            color: UI.textPrimary,
+                            borderRadius: 8,
+                            padding: "12px 0",
+                            fontSize: "1rem",
+                            letterSpacing: "0.08em",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            width: "100%",
+                        }}
+                    >
+                        Detail
+                    </button>
+                    <button
+                        onClick={() => onToggleCompare(player)}
+                        style={{
+                            background: compareOpen ? UI.accent : "#1b2644",
+                            border: `1px solid ${UI.border}`,
+                            color: UI.textPrimary,
+                            borderRadius: 8,
+                            padding: "12px 0",
+                            fontSize: "1rem",
+                            letterSpacing: "0.08em",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            width: "100%",
+                        }}
+                    >
+                        Compare
+                    </button>
+                </div>
+
+                {compareOpen ? (
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: "calc(100% + 8px)",
+                            left: 0,
+                            right: 0,
+                            zIndex: 15,
+                            display: "grid",
+                            gap: 8,
+                            padding: 10,
+                            borderRadius: 10,
+                            border: `1px solid ${UI.border}`,
+                            background: UI.surfaceAlt,
+                        }}
+                    >
+                        <button
+                            onClick={() => onCompareSelect(player, "player")}
+                            style={{
+                                background: "#1b2644",
+                                border: `1px solid ${UI.border}`,
+                                color: UI.textPrimary,
+                                borderRadius: 8,
+                                padding: "10px 12px",
+                                fontSize: "0.9rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                textAlign: "left",
+                            }}
+                        >
+                            Player vs Player
+                        </button>
+                        <button
+                            onClick={() => onCompareSelect(player, "team")}
+                            style={{
+                                background: "#1b2644",
+                                border: `1px solid ${UI.border}`,
+                                color: UI.textPrimary,
+                                borderRadius: 8,
+                                padding: "10px 12px",
+                                fontSize: "0.9rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                textAlign: "left",
+                            }}
+                        >
+                            Player vs Team
+                        </button>
+                    </div>
+                ) : null}
+            </div>
         </div>
     );
 }
