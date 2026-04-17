@@ -100,6 +100,91 @@ body { background: var(--bg-page); font-family: system-ui, -apple-system, sans-s
   gap: 2px;
   min-width: 0;
 }
+
+.leaderboard-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+@property --leaderboard-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.leaderboard-card--hot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  clip-path: inset(0 round 14px);
+  --leaderboard-border-angle: 0deg;
+  background: conic-gradient(
+    from var(--leaderboard-border-angle),
+    rgba(255, 0, 64, 0) 0deg,
+    rgba(255, 0, 64, 0) 275deg,
+    rgba(255, 0, 0, 0.18) 286deg,
+    rgba(255, 68, 68, 0.98) 296deg,
+    rgba(255, 0, 0, 0.95) 304deg,
+    rgba(255, 200, 0, 0.95) 312deg,
+    rgba(255, 180, 0, 0.98) 318deg,
+    rgba(255, 0, 64, 0.16) 328deg,
+    rgba(255, 0, 64, 0) 360deg
+  );
+  animation: leaderboard-border-angle 2.8s linear forwards;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 320ms ease, filter 320ms ease;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter:
+    drop-shadow(0 0 4px rgba(255, 120, 120, 0.45))
+    drop-shadow(0 0 10px rgba(255, 0, 0, 0.85))
+    drop-shadow(0 0 18px rgba(160, 0, 0, 0.35));
+}
+
+.leaderboard-card--hot-settling::before,
+.leaderboard-card--hot-static::before {
+  opacity: 0;
+  filter: none;
+}
+
+.leaderboard-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.leaderboard-card__hot-emoji {
+  display: inline-block;
+  transform-origin: 50% 70%;
+  animation: leaderboard-hot-bounce 1.05s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+}
+
+.leaderboard-card--hot-static {
+  box-shadow: 0 0 8px rgba(255, 82, 82, 0.08);
+}
+
+@keyframes leaderboard-border-angle {
+  to {
+    --leaderboard-border-angle: 1turn;
+  }
+}
+
+@keyframes leaderboard-hot-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(0.98);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-1px) scale(1.08);
+    opacity: 1;
+  }
+}
 /* Upcoming games styles*/
 .games-section {
   max-width: 1200px;

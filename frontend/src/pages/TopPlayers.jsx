@@ -21,6 +21,18 @@ const UI = {
     accent: "#5d84ff",
 };
 
+const toNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+const isHotPlayer = (player) => {
+    const seasonAvg = toNumber(player?.statistic);
+    const last5Avg = toNumber(player?.avgLast5);
+
+    return seasonAvg !== null && last5Avg !== null && last5Avg > seasonAvg;
+};
+
 export default function TopPlayers() {
     const [players, setPlayers] = useState([]);
     const [topPlayers, setTopPlayers] = useState([]);
@@ -101,7 +113,13 @@ export default function TopPlayers() {
             try {
                 const res = await fetch(API.leaderboard(statType, LAST_FULL_SEASON));
                 if (!res.ok) {
-                    throw new Error(`Leaderboard request failed with status ${res.status}`);
+                    console.error(`Leaderboard request failed with status ${res.status}`);
+                    if (!cancelled) {
+                        setPlayers([]);
+                        setTopPlayers([]);
+                        setLoading(false);
+                    }
+                    return;
                 }
 
                 const data = await res.json();
@@ -436,17 +454,43 @@ export default function TopPlayers() {
 
 function LeaderboardCard({ player, onClick, selected }) {
     const [imgError, setImgError] = useState(false);
+    const [hotPhase, setHotPhase] = useState("animating");
     const initials = `${player.firstName?.[0] ?? ""}${player.lastName?.[0] ?? ""}`.toUpperCase();
+    const hot = isHotPlayer(player);
 
     useEffect(() => {
         setImgError(false);
     }, [player?.nbaPlayerId]);
 
+    useEffect(() => {
+        setHotPhase("animating");
+    }, [player?.playerId, hot]);
+
+    useEffect(() => {
+        if (hotPhase !== "settling") return;
+
+        const settleTimeout = setTimeout(() => {
+            setHotPhase("static");
+        }, 320);
+
+        return () => clearTimeout(settleTimeout);
+    }, [hotPhase]);
+
+    const settling = hot && hotPhase === "settling";
+    const staticHot = hot && hotPhase === "static";
+    const tintedHot = settling || staticHot;
+
     return (
         <div
+            className={`leaderboard-card${hot ? " leaderboard-card--hot" : ""}${settling ? " leaderboard-card--hot-settling" : ""}${staticHot ? " leaderboard-card--hot-static" : ""}`}
+            onAnimationEnd={(event) => {
+                if (event.animationName === "leaderboard-border-angle" && hotPhase === "animating") {
+                    setHotPhase("settling");
+                }
+            }}
             style={{
-                background: selected ? "#1a2745" : UI.surface,
-                border: `1.5px solid ${selected ? UI.accent : UI.border}`,
+                background: selected ? "#1a2745" : tintedHot ? "#262638" : UI.surface,
+                border: `1.5px solid ${selected ? UI.accent : hot && hotPhase === "animating" ? "transparent" : UI.border}`,
                 borderRadius: 14,
                 padding: 28,
                 display: "flex",
@@ -454,6 +498,7 @@ function LeaderboardCard({ player, onClick, selected }) {
                 gap: 12,
                 height: "100%",
                 boxShadow: selected ? "0 0 18px #4f7cff44" : "none",
+                transition: "background-color 320ms ease, border-color 320ms ease, box-shadow 320ms ease",
             }}
         >
             <div
@@ -463,9 +508,23 @@ function LeaderboardCard({ player, onClick, selected }) {
                     fontWeight: 800,
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 8,
                 }}
             >
                 Rank #{player.rank}
+                {hot ? (
+                    <span
+                        className="leaderboard-card__hot-emoji"
+                        aria-label="hot player"
+                        style={{ fontSize: "1.15rem" }}
+                    >
+                        🔥
+                    </span>
+                ) : null}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
