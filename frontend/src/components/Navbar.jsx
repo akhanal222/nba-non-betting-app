@@ -66,7 +66,7 @@ const NAV_ITEMS = ["HOME", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
                           navigate("/team/standing");
                           return;
                       }
-                      if (item === "Home") {
+                      if (item === "HOME") {
                           navigate("/");
                       }
 
