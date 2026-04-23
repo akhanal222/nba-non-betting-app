@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import NbaLogo from "../assets/logo.png";
+import NbaLogo from "../assets/test.svg";
 import { useNavigate } from "react-router-dom";
 
 // Main navigation buttons shown in the top bar
@@ -32,7 +32,7 @@ const NAV_ITEMS = ["HOME", "PLAYERS", "MATCHUPS", "PREDICTIONS","STANDING"];
         gap: 40,
       }}>
 {/*    Logo of the app */}
-          <div style={{ position: "absolute", left: 24, marginTop:30, display: "flex", alignItems: "center" }}>
+          <div style={{ position: "absolute", left: 24, marginTop:45, display: "flex", alignItems: "center" }}>
             <img
               src={NbaLogo}
               alt="NBA Logo"
