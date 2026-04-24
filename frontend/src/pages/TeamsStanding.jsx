@@ -223,7 +223,7 @@ export default function NBAStandings() {
                             </h1>
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
-                            <ActionBtn onClick={importSeason} loading={actionLoading === "import"} label="Import Season"  />
+                            {/*<ActionBtn onClick={importSeason} loading={actionLoading === "import"} label="Import Season"  />*/}
                             <ActionBtn onClick={refreshStandings} loading={actionLoading === "refresh"} label="Refresh Standings"  />
                         </div>
                     </div>
